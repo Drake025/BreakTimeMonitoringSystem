@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Break Time Monitoring System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #3b82f6;
+      --success: #059669;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      --radius-sm: 4px;
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+    * { box-sizing: border-box; }
+    body { 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      color: var(--gray-800);
+    }
+    .company-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 20px 32px;
+      box-shadow: var(--shadow-md);
+    }
+    .company-header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      background: rgba(255,255,255,0.2);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+    }
+    .brand-subtitle {
+      font-size: 0.8rem;
+      opacity: 0.85;
+      font-weight: 400;
+    }
+    .main-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px 32px;
+    }
+    .topbar { 
+      background: white; 
+      padding: 16px 24px; 
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 16px; 
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .date-wrap, .right-tools { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .date-wrap label { font-weight: 500; color: var(--gray-600); }
+    input[type="date"] { 
+      padding: 10px 14px; 
+      border: 1px solid var(--gray-300); 
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      font-family: inherit;
+      color: var(--gray-700);
+      background: var(--gray-50);
+    }
+    input[type="date"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    button { 
+      padding: 10px 18px; 
+      border: none; 
+      background: var(--gray-100); 
+      color: var(--gray-700);
+      border-radius: var(--radius); 
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+    button:hover { background: var(--gray-200); }
+    button:active { transform: scale(0.98); }
+    button:disabled { background: var(--gray-100); color: var(--gray-400); cursor: not-allowed; }
+    #todayBtn { background: var(--primary); color: white; }
+    #todayBtn:hover { background: var(--primary-dark); }
+    #exportBtn { background: var(--success); color: white; }
+    #exportBtn:hover { background: #047857; }
+    #clearDateBtn { background: var(--danger); color: white; }
+    #clearDateBtn:hover { background: #b91c1c; }
+    .user-section { 
+      background: white; 
+      padding: 24px; 
+      border-radius: var(--radius-lg); 
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+    .user-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .user-section h2 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--primary-light), var(--primary));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+    .controls button {
+      flex: 1;
+      min-width: 160px;
+      padding: 12px 16px;
+    }
+    .btn-start { background: var(--primary); color: white; }
+    .btn-start:hover { background: var(--primary-dark); }
+    .btn-end { background: var(--success); color: white; }
+    .btn-end:hover { background: #047857; }
+    .exceeded { color: var(--danger); font-weight: 600; }
+    .log-container {
+      background: var(--gray-50);
+      border-radius: var(--radius);
+      padding: 16px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+    .log-entry { 
+      padding: 8px 12px; 
+      margin-bottom: 6px; 
+      background: white;
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--primary);
+      font-size: 0.875rem;
+    }
+    .log-entry.exceeded { border-left-color: var(--danger); background: #fef2f2; }
+    .log-entry.success { border-left-color: var(--success); }
+    .pill { 
+      display: inline-block; 
+      padding: 4px 12px; 
+      font-size: 0.75rem; 
+      font-weight: 500;
+      border-radius: 999px; 
+      margin-left: 8px;
+    }
+    .active-pill { 
+      background: #dbeafe; 
+      color: var(--primary); 
+      border: 1px solid #93c5fd;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    .hint { color: var(--gray-500); margin: 12px 0; font-size: 0.875rem; }
+    .name-over-limit { color: var(--danger); }
+    .badge { 
+      padding: 6px 14px; 
+      font-size: 0.8rem; 
+      font-weight: 500;
+      border-radius: 999px; 
+      border: 1px solid;
+    }
+    .badge-admin { 
+      background: #dcfce7; 
+      color: #166534; 
+      border-color: #86efac; 
+    }
+    .badge-emp { 
+      background: #dbeafe; 
+      color: #1e40af; 
+      border-color: #93c5fd; 
+    }
+    .section-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+
+    .overlay {
+      position: fixed; inset: 0; 
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.9) 0%, rgba(29, 78, 216, 0.95) 100%);
+      display: none; 
+      align-items: center; 
+      justify-content: center; 
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+    .modal {
+      background: white; 
+      padding: 36px; 
+      border-radius: var(--radius-lg); 
+      width: 400px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    .modal-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .modal-header h2 { 
+      margin: 0 0 8px; 
+      font-size: 1.5rem; 
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+    .modal-header p {
+      margin: 0;
+      color: var(--gray-500);
+      font-size: 0.9rem;
+    }
+    .field { margin: 16px 0; display: flex; flex-direction: column; gap: 6px; }
+    .field label { 
+      font-weight: 500; 
+      font-size: 0.875rem;
+      color: var(--gray-700); 
+    }
+    .row { display: flex; gap: 16px; align-items: center; }
+    .row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    select, input[type="password"], input[type="text"] { 
+      padding: 12px 14px; 
+      border: 1px solid var(--gray-300); 
+      border-radius: var(--radius); 
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    select:focus, input[type="password"]:focus, input[type="text"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .modal .actions { display: flex; gap: 12px; justify-content: stretch; margin-top: 24px; }
+    .modal .actions button { flex: 1; padding: 12px; }
+    #loginBtn { background: var(--primary); color: white; }
+    #loginBtn:hover { background: var(--primary-dark); }
+    #loginCancelBtn { background: var(--gray-100); }
+    #loginCancelBtn:hover { background: var(--gray-200); }
+    .hide { display: none; }
+    
+    .login-brand {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-radius: var(--radius-lg);
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 28px;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    .sync-status {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sync-status.syncing {
+      color: var(--warning);
+    }
+    .sync-status.synced {
+      color: var(--success);
+    }
+    .user-count {
+      background: var(--primary);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+<div class="company-header">
+  <div class="company-header-inner">
+    <div class="brand">
+      <div class="brand-icon">⏱</div>
+      <div>
+        <h1>Break Time Monitoring</h1>
+        <div class="brand-subtitle">Employee Break Tracking System</div>
+      </div>
+    </div>
+    <div class="status-bar">
+      <div class="sync-status" id="syncStatus">
+        <span>●</span> Connecting...
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="topbar">
+    <div class="date-wrap">
+      <label for="datePicker">Select Date:</label>
+      <input type="date" id="datePicker" />
+      <button id="todayBtn" title="Jump to today">Today</button>
+    </div>
+
+    <div class="right-tools" style="margin-left:auto;">
+      <span class="user-count" id="userCount" style="display:none;">0 online</span>
+      <button id="exportBtn" title="Export logs to CSV">Export CSV</button>
+      <button id="clearDateBtn" title="Clear logs for selected date" style="display:none;">Clear Selected Date</button>
+      <span id="whoAmI" class="badge"></span>
+      <button id="switchAccountBtn" title="Switch account">Switch Account</button>
+    </div>
+  </div>
+
+  <div id="users"></div>
+</div>
+
+<!-- Login Overlay -->
+<div id="loginOverlay" class="overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="login-brand">⏱</div>
+      <h2>Welcome Back</h2>
+      <p>Sign in to access the break monitoring system</p>
+    </div>
+
+    <div class="field">
+      <label><strong>Role</strong></label>
+      <div class="row">
+        <label><input type="radio" name="role" value="employee" checked /> Employee</label>
+        <label><input type="radio" name="role" value="admin" /> Admin</label>
+      </div>
+    </div>
+
+    <div id="empFields">
+      <div class="field">
+        <label for="empName">Employee Name</label>
+        <input id="empName" type="text" placeholder="Type your name" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="empPin">PIN</label>
+        <input id="empPin" type="password" placeholder="Enter your PIN" />
+      </div>
+    </div>
+
+    <div id="adminFields" class="hide">
+      <div class="field">
+        <label for="adminPin">Admin PIN</label>
+        <input id="adminPin" type="password" placeholder="Enter Admin PIN" />
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="loginCancelBtn">Cancel</button>
+      <button id="loginBtn">Login</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<script>
+// ============================================================
+// FIREBASE CONFIGURATION - REPLACE WITH YOUR OWN CONFIG
+// ============================================================
+// Go to https://console.firebase.google.com/
+// 1. Create a new project
+// 2. Build > Realtime Database > Create Database
+// 3. Choose "Start in test mode" (or set rules below)
+// 4. Project Settings > Your apps > Web app
+// 5. Copy the firebaseConfig and replace the object below
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB6HMUB9tjhfhjVmdFe3KrUc6YqtKM-xq4",
+  authDomain: "breaktime-monitoring-system.firebaseapp.com",
+  databaseURL: "https://breaktime-monitoring-system-default-rtdb.firebaseio.com",
+  projectId: "breaktime-monitoring-system",
+  storageBucket: "breaktime-monitoring-system.firebasestorage.app",
+  messagingSenderId: "13352620027",
+  appId: "1:13352620027:web:c0b9261fff5ec695ba055e",
+  measurementId: "G-Z6THP91YC6"
+};
+
+// ============================================================
+// Initialize Firebase
+// ============================================================
+let database;
+let breakDataRef;
+let logsRef;
+let isConnected = false;
+
+function initFirebase() {
+  try {
+    firebase.initializeApp(firebaseConfig);
+    database = firebase.database();
+    breakDataRef = database.ref('breakData');
+    logsRef = database.ref('logs');
+    
+    // Connection status
+    const connectedRef = database.ref('.info/connected');
+    connectedRef.on('value', (snap) => {
+      isConnected = snap.val() === true;
+      updateSyncStatus();
+    });
+    
+    // Real-time sync listener
+    breakDataRef.on('value', (snapshot) => {
+      if (snapshot.val()) {
+        const allData = snapshot.val();
+        if (allData[selectedDate]) {
+          breakData = allData[selectedDate];
+          ensureUserStructures();
+          buildUserSections();
+        }
+      }
+    });
+    
+    logsRef.on('value', (snapshot) => {
+      if (snapshot.val()) {
+        const allLogs = snapshot.val();
+        if (allLogs[selectedDate]) {
+          logEntries = allLogs[selectedDate];
+          ensureUserStructures();
+          renderAllLogs();
+        }
+      }
+    });
+    
+    console.log('Firebase initialized successfully');
+  } catch (error) {
+    console.error('Firebase initialization error:', error);
+    document.getElementById('syncStatus').innerHTML = '<span>●</span> Configuration error';
+  }
+}
+
+function updateSyncStatus() {
+  const statusEl = document.getElementById('syncStatus');
+  if (isConnected) {
+    statusEl.className = 'sync-status synced';
+    statusEl.innerHTML = '<span>●</span> Synced';
+  } else {
+    statusEl.className = 'sync-status syncing';
+    statusEl.innerHTML = '<span>●</span> Connecting...';
+  }
+}
+
+// ============================================================
+// USER LIST (Your Employees) - Edit this list
+// ============================================================
+const userNames = [
+  "Prince Jeremie Malana",
+  "MATT",
+  "XERXIS",
+  "CENT",
+  "MAK",
+  "WINSLET",
+  "GLADYS",
+  "JESSICARTS",
+  "MLORIDA"
+];
+
+// PINS - Default '0000' for all. Change these for security.
+const USER_PINS = {
+  "Prince Jeremie Malana": "0000",
+  "MATT": "0000",
+  "XERXIS": "0000",
+  "CENT": "0000",
+  "MAK": "0000",
+  "WINSLET": "0000",
+  "GLADYS": "0000",
+  "JESSICARTS": "0000",
+  "MLORIDA": "0000"
+};
+
+// Admin PIN - CHANGE THIS!
+const ADMIN_PIN = "2468";
+
+// Allowed break durations (in minutes)
+const breakLimits = { firstBreak: 15, lunch: 60, lastBreak: 15 };
+
+// Session keys
+const SESSION_ROLE_KEY = "btm_role";
+const SESSION_USER_KEY = "btm_user";
+
+function isAdmin() {
+  return sessionStorage.getItem(SESSION_ROLE_KEY) === "admin";
+}
+function currentUser() {
+  return sessionStorage.getItem(SESSION_USER_KEY) || null;
+}
+function setSession(role, user=null) {
+  if (role === "admin") {
+    sessionStorage.setItem(SESSION_ROLE_KEY, "admin");
+    sessionStorage.removeItem(SESSION_USER_KEY);
+  } else if (role === "employee" && user) {
+    sessionStorage.setItem(SESSION_ROLE_KEY, "employee");
+    sessionStorage.setItem(SESSION_USER_KEY, user);
+  } else {
+    sessionStorage.removeItem(SESSION_ROLE_KEY);
+    sessionStorage.removeItem(SESSION_USER_KEY);
+  }
+  syncAuthUI();
+}
+
+// State
+let selectedDate = toDateStr(new Date());
+let breakData = {};
+let logEntries = {};
+
+// Utility Functions
+function toDateStr(d) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+function sanitizeId(str) { return str.replace(/[^a-z0-9]+/gi, "-").toLowerCase(); }
+function fmtNow() { return new Date().toLocaleTimeString(); }
+function formatType(type) {
+  return type === "firstBreak" ? "First Break" :
+         type === "lunch"      ? "Lunch" :
+                                 "Last Break";
+}
+function minutesDiff(a, b) { return Math.round((b.getTime() - a.getTime()) / 60000); }
+
+// Ensure user structures exist
+function ensureUserStructures() {
+  userNames.forEach(u => {
+    if (!breakData[u]) {
+      breakData[u] = {
+        firstBreak: { start: null, end: null },
+        lunch:      { start: null, end: null },
+        lastBreak:  { start: null, end: null },
+        activeBreak: null
+      };
+    }
+    if (!logEntries[u]) {
+      logEntries[u] = [];
+    }
+  });
+}
+
+// Save to Firebase (real-time sync)
+function persistToFirebase() {
+  if (!database) return;
+  
+  const updates = {};
+  updates[`/breakData/${selectedDate}`] = breakData;
+  updates[`/logs/${selectedDate}`] = logEntries;
+  
+  database.ref().update(updates).catch(err => {
+    console.error('Error saving to Firebase:', err);
+  });
+}
+
+// UI Elements
+const usersContainer = document.getElementById("users");
+const datePicker = document.getElementById("datePicker");
+const todayBtn = document.getElementById("todayBtn");
+const exportBtn = document.getElementById("exportBtn");
+const clearDateBtn = document.getElementById("clearDateBtn");
+const whoAmI = document.getElementById("whoAmI");
+const switchAccountBtn = document.getElementById("switchAccountBtn");
+
+const loginOverlay = document.getElementById("loginOverlay");
+const empFields = document.getElementById("empFields");
+const adminFields = document.getElementById("adminFields");
+const empNameInput = document.getElementById("empName");
+const empPinInput = document.getElementById("empPin");
+const adminPinInput = document.getElementById("adminPin");
+const loginBtn = document.getElementById("loginBtn");
+const loginCancelBtn = document.getElementById("loginCancelBtn");
+
+function getVisibleUsers() {
+  return isAdmin() ? userNames : (currentUser() ? [currentUser()] : []);
+}
+
+function buildUserSections() {
+  usersContainer.innerHTML = "";
+  const visible = getVisibleUsers();
+  ensureUserStructures();
+  
+  visible.forEach(user => {
+    const section = document.createElement("div");
+    section.className = "user-section";
+    section.id = `section-${sanitizeId(user)}`;
+
+    const initials = user.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+
+    section.innerHTML = `
+      <div class="user-section-header">
+        <div class="user-info">
+          <div class="user-avatar">${initials}</div>
+          <h2>
+            <span id="name-${sanitizeId(user)}">${user}</span>
+            <span id="active-pill-${sanitizeId(user)}" class="pill" style="display:none;"></span>
+          </h2>
+        </div>
+      </div>
+
+      <div class="section-title">Break Controls</div>
+      <div class="controls">
+        <button id="start-first-${sanitizeId(user)}" class="btn-start" onclick="startBreak('${user}', 'firstBreak')">Start First Break (15m)</button>
+        <button id="back-first-${sanitizeId(user)}"  class="btn-end" onclick="endBreak('${user}', 'firstBreak')">Back from First Break</button>
+
+        <button id="start-lunch-${sanitizeId(user)}" class="btn-start" onclick="startBreak('${user}', 'lunch')">Start Lunch (60m)</button>
+        <button id="back-lunch-${sanitizeId(user)}"  class="btn-end" onclick="endBreak('${user}', 'lunch')">Back from Lunch</button>
+
+        <button id="start-last-${sanitizeId(user)}"  class="btn-start" onclick="startBreak('${user}', 'lastBreak')">Start Last Break (15m)</button>
+        <button id="back-last-${sanitizeId(user)}"   class="btn-end" onclick="endBreak('${user}', 'lastBreak')">Back from Last Break</button>
+      </div>
+
+      <div class="section-title">Break Log - ${selectedDate}</div>
+      <div id="log-${sanitizeId(user)}" class="log-container"></div>
+    `;
+
+    usersContainer.appendChild(section);
+    renderLog(user);
+    syncButtons(user);
+    updateNameColor(user);
+  });
+
+  if (visible.length === 0) {
+    usersContainer.innerHTML = `<div class="user-section" style="text-align:center;padding:48px;"><p style="color:var(--gray-500);font-size:1rem;">Please sign in to view your break logs.</p></div>`;
+  }
+}
+
+function renderAllLogs() {
+  const visible = getVisibleUsers();
+  visible.forEach(user => {
+    renderLog(user);
+    syncButtons(user);
+    updateNameColor(user);
+  });
+}
+
+function getBtnRefs(user) {
+  const id = sanitizeId(user);
+  return {
+    startFirst: document.getElementById(`start-first-${id}`),
+    backFirst:  document.getElementById(`back-first-${id}`),
+    startLunch: document.getElementById(`start-lunch-${id}`),
+    backLunch:  document.getElementById(`back-lunch-${id}`),
+    startLast:  document.getElementById(`start-last-${id}`),
+    backLast:   document.getElementById(`back-last-${id}`),
+    activePill: document.getElementById(`active-pill-${id}`),
+    nameSpan:   document.getElementById(`name-${id}`)
+  };
+}
+
+function syncButtons(user) {
+  if (!breakData[user]) return;
+  const active = breakData[user].activeBreak;
+  const btns = getBtnRefs(user);
+  if (!btns.startFirst) return;
+
+  const allStart = [btns.startFirst, btns.startLunch, btns.startLast];
+  const allBack  = [btns.backFirst,  btns.backLunch,  btns.backLast];
+
+  if (!active) {
+    allStart.forEach(b => b.disabled = false);
+    allBack.forEach(b => b.disabled = true);
+    if (btns.activePill) {
+      btns.activePill.style.display = "none";
+      btns.activePill.classList.remove("active-pill");
+      btns.activePill.textContent = "";
+    }
+    return;
+  }
+
+  allStart.forEach(b => b.disabled = true);
+  allBack.forEach(b => b.disabled = true);
+
+  if (active === "firstBreak") btns.backFirst.disabled = false;
+  if (active === "lunch")      btns.backLunch.disabled = false;
+  if (active === "lastBreak")  btns.backLast.disabled = false;
+
+  if (btns.activePill) {
+    btns.activePill.style.display = "inline-block";
+    btns.activePill.classList.add("active-pill");
+    btns.activePill.textContent = `Active: ${formatType(active)}`;
+  }
+}
+
+function log(user, message) {
+  if (!logEntries[user]) logEntries[user] = [];
+  logEntries[user].push(message);
+  persistToFirebase();
+
+  const box = document.getElementById(`log-${sanitizeId(user)}`);
+  if (!box) return;
+  const div = document.createElement("div");
+  div.className = "log-entry";
+  if (message.includes("exceeded") || message.includes("Exceeded")) {
+    div.classList.add("exceeded");
+  } else if (message.includes("started at") || message.includes("ended at")) {
+    div.classList.add("success");
+  }
+  div.innerHTML = message;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function renderLog(user) {
+  const box = document.getElementById(`log-${sanitizeId(user)}`);
+  if (!box) return;
+  box.innerHTML = "";
+  if (!logEntries[user]) return;
+  
+  logEntries[user].forEach(msg => {
+    const div = document.createElement("div");
+    div.className = "log-entry";
+    if (msg.includes("exceeded") || msg.includes("Exceeded")) {
+      div.classList.add("exceeded");
+    } else if (msg.includes("started at") || msg.includes("ended at")) {
+      div.classList.add("success");
+    }
+    div.innerHTML = msg;
+    box.appendChild(div);
+  });
+}
+
+function updateNameColor(user) {
+  const { nameSpan } = getBtnRefs(user);
+  if (!nameSpan) return;
+
+  const types = ["firstBreak","lunch","lastBreak"];
+  let exceeded = false;
+
+  for (const t of types) {
+    const rec = breakData[user]?.[t];
+    if (rec && rec.start && rec.end) {
+      const start = new Date(rec.start);
+      const end   = new Date(rec.end);
+      const duration = minutesDiff(start, end);
+      if (duration > breakLimits[t]) {
+        exceeded = true;
+        break;
+      }
+    }
+  }
+
+  if (exceeded) {
+    nameSpan.classList.add("name-over-limit");
+    nameSpan.title = "Exceeded allowed break time on this date";
+  } else {
+    nameSpan.classList.remove("name-over-limit");
+    nameSpan.removeAttribute("title");
+  }
+}
+
+// Break Actions
+window.startBreak = function(user, type) {
+  if (!isAdmin() && user !== currentUser()) {
+    alert("You can only log your own breaks.");
+    return;
+  }
+
+  const state = breakData[user];
+  if (!state) {
+    breakData[user] = {
+      firstBreak: { start: null, end: null },
+      lunch: { start: null, end: null },
+      lastBreak: { start: null, end: null },
+      activeBreak: null
+    };
+  }
+
+  if (state.activeBreak && state.activeBreak !== type) {
+    alert(`You already have an active ${formatType(state.activeBreak)}. Please click "Back" first.`);
+    return;
+  }
+  if (state.activeBreak === type) {
+    alert(`${formatType(type)} is already active.`);
+    return;
+  }
+
+  breakData[user][type].start = new Date().toISOString();
+  breakData[user][type].end = null;
+  breakData[user].activeBreak = type;
+
+  log(user, `<strong>${formatType(type)}</strong> started at: ${fmtNow()}`);
+  persistToFirebase();
+  syncButtons(user);
+};
+
+window.endBreak = function(user, type) {
+  if (!isAdmin() && user !== currentUser()) {
+    alert("You can only log your own breaks.");
+    return;
+  }
+
+  const state = breakData[user];
+  if (!state || state.activeBreak !== type) {
+    alert(`No active ${formatType(type)} to end.`);
+    return;
+  }
+  const startISO = state[type].start;
+  if (!startISO) {
+    alert(`You did not start this break yet.`);
+    return;
+  }
+
+  const start = new Date(startISO);
+  const end = new Date();
+  breakData[user][type].end = end.toISOString();
+  breakData[user].activeBreak = null;
+
+  const diffMinutes = minutesDiff(start, end);
+  const limit = breakLimits[type];
+
+  let message = `<strong>${formatType(type)}</strong> ended at: ${fmtNow()} (Duration: ${diffMinutes} mins)`;
+  if (diffMinutes > limit) {
+    message += ` <span class="exceeded">⚠ Exceeded by ${diffMinutes - limit} mins</span>`;
+  }
+
+  log(user, message);
+  persistToFirebase();
+  syncButtons(user);
+  updateNameColor(user);
+};
+
+// Date Picker
+function initDatePicker() {
+  datePicker.value = selectedDate;
+  datePicker.addEventListener("change", () => {
+    selectedDate = datePicker.value || toDateStr(new Date());
+    loadDateData(selectedDate);
+  });
+  todayBtn.addEventListener("click", () => {
+    selectedDate = toDateStr(new Date());
+    datePicker.value = selectedDate;
+    loadDateData(selectedDate);
+  });
+  exportBtn.addEventListener("click", exportToCSV);
+  clearDateBtn.addEventListener("click", clearSelectedDate);
+}
+
+function loadDateData(dateStr) {
+  if (database) {
+    database.ref(`breakData/${dateStr}`).once('value').then(snapshot => {
+      if (snapshot.val()) {
+        breakData = snapshot.val();
+      } else {
+        breakData = {};
+      }
+      ensureUserStructures();
+      buildUserSections();
+    });
+    
+    database.ref(`logs/${dateStr}`).once('value').then(snapshot => {
+      if (snapshot.val()) {
+        logEntries = snapshot.val();
+      } else {
+        logEntries = {};
+      }
+      ensureUserStructures();
+      renderAllLogs();
+    });
+  }
+}
+
+// Export CSV
+function exportToCSV() {
+  const headers = ["Date","User","Break Type","Start","End","Duration (min)","Exceeded (min)"];
+  const rows = [headers];
+
+  const users = getVisibleUsers();
+  users.forEach(u => {
+    ["firstBreak","lunch","lastBreak"].forEach(t => {
+      const rec = breakData[u]?.[t];
+      if (rec && (rec.start || rec.end)) {
+        const start = rec.start ? new Date(rec.start) : null;
+        const end   = rec.end ? new Date(rec.end) : null;
+        const duration = (start && end) ? minutesDiff(start, end) : "";
+        const limit = breakLimits[t];
+        const exceeded = (duration !== "" && duration > limit) ? (duration - limit) : "";
+        rows.push([
+          selectedDate,
+          u,
+          formatType(t),
+          start ? start.toLocaleTimeString() : "",
+          end ? end.toLocaleTimeString() : "",
+          duration,
+          exceeded
+        ]);
+      }
+    });
+  });
+
+  const csv = rows.map(r => r.map(field => {
+    const s = String(field ?? "");
+    if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+      return `"${s.replace(/"/g, '""')}"`;
+    }
+    return s;
+  }).join(",")).join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const namePart = isAdmin() ? "all" : (currentUser() || "user");
+  a.download = `break-logs-${selectedDate}-${namePart}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Clear date (admin only)
+function clearSelectedDate() {
+  if (!isAdmin()) {
+    alert("Admin access required.");
+    return;
+  }
+  if (!confirm(`Clear all logs for ${selectedDate}? This cannot be undone.`)) return;
+
+  if (database) {
+    const updates = {};
+    updates[`/breakData/${selectedDate}`] = null;
+    updates[`/logs/${selectedDate}`] = null;
+    database.ref().update(updates).then(() => {
+      breakData = {};
+      logEntries = {};
+      ensureUserStructures();
+      buildUserSections();
+    });
+  }
+}
+
+// Auth UI
+function showLoginOverlay() {
+  document.querySelectorAll('input[name="role"]').forEach(r => {
+    r.checked = (r.value === "employee");
+  });
+  empFields.classList.remove("hide");
+  adminFields.classList.add("hide");
+  empNameInput.value = "";
+  empPinInput.value = "";
+  adminPinInput.value = "";
+  loginOverlay.style.display = "flex";
+}
+
+function hideLoginOverlay() {
+  loginOverlay.style.display = "none";
+}
+
+function syncAuthUI() {
+  const role = sessionStorage.getItem(SESSION_ROLE_KEY);
+  const user = currentUser();
+
+  if (isAdmin()) {
+    whoAmI.textContent = "Admin";
+    whoAmI.className = "badge badge-admin";
+  } else if (role === "employee" && user) {
+    whoAmI.textContent = user;
+    whoAmI.className = "badge badge-emp";
+  } else {
+    whoAmI.textContent = "";
+    whoAmI.className = "badge";
+  }
+
+  clearDateBtn.style.display = isAdmin() ? "inline-block" : "none";
+  exportBtn.textContent = isAdmin() ? "Export CSV (All)" : "Export CSV (Mine)";
+}
+
+document.querySelectorAll('input[name="role"]').forEach(radio => {
+  radio.addEventListener("change", (e) => {
+    const role = e.target.value;
+    if (role === "employee") {
+      empFields.classList.remove("hide");
+      adminFields.classList.add("hide");
+    } else {
+      empFields.classList.add("hide");
+      adminFields.classList.remove("hide");
+      setTimeout(() => adminPinInput.focus(), 0);
+    }
+  });
+});
+
+function findCanonicalName(input) {
+  const needle = (input || "").trim().toLowerCase();
+  return userNames.find(u => u.toLowerCase() === needle) || null;
+}
+
+function verifyEmployee(nameInput, pinInput) {
+  const canonical = findCanonicalName(nameInput);
+  if (!canonical) return null;
+  const expectedPin = USER_PINS[canonical];
+  if (!expectedPin) return null;
+  if (String(pinInput) !== String(expectedPin)) return null;
+  return canonical;
+}
+
+document.getElementById("loginBtn").addEventListener("click", () => {
+  const role = [...document.querySelectorAll('input[name="role"]')].find(r => r.checked)?.value;
+  if (role === "employee") {
+    const okName = verifyEmployee(empNameInput.value, empPinInput.value);
+    if (!okName) {
+      alert("Invalid credentials.");
+      return;
+    }
+    setSession("employee", okName);
+    hideLoginOverlay();
+    loadDateData(selectedDate);
+  } else if (role === "admin") {
+    const pin = adminPinInput.value.trim();
+    if (pin !== ADMIN_PIN) {
+      alert("Incorrect Admin PIN.");
+      return;
+    }
+    setSession("admin");
+    hideLoginOverlay();
+    loadDateData(selectedDate);
+  }
+});
+
+document.getElementById("loginCancelBtn").addEventListener("click", () => {
+  if (!sessionStorage.getItem(SESSION_ROLE_KEY)) {
+    alert("You must sign in to proceed.");
+    return;
+  }
+  hideLoginOverlay();
+});
+
+document.getElementById("switchAccountBtn").addEventListener("click", () => {
+  setSession(null);
+  buildUserSections();
+  showLoginOverlay();
+});
+
+// Initialize
+function initApp() {
+  selectedDate = toDateStr(new Date());
+  datePicker.value = selectedDate;
+  initDatePicker();
+  
+  // Initialize Firebase
+  initFirebase();
+  
+  // Check for existing session
+  if (sessionStorage.getItem(SESSION_ROLE_KEY)) {
+    syncAuthUI();
+    loadDateData(selectedDate);
+  } else {
+    syncAuthUI();
+    buildUserSections();
+    showLoginOverlay();
+  }
+}
+
+initApp();
+</script>
+
+</body>
+</html>
