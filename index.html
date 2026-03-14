@@ -146,8 +146,8 @@
 
 <div class="main-container">
   <div class="tabs" id="mainTabs">
-    <button class="tab active" onclick="showTab('breaks')" id="breaksTab">Break Logs</button>
-    <button class="tab" onclick="showTab('dashboard')" id="dashboardTab" style="display:none;">Dashboard</button>
+    <button class="tab active" onclick="showTab('dashboard')" id="dashboardTab">Dashboard</button>
+    <button class="tab" onclick="showTab('breaks')" id="breaksTab">Break Logs</button>
     <button class="tab" onclick="showTab('reports')" id="reportsTab" style="display:none;">Reports</button>
     <button class="tab" onclick="showTab('employees')" id="adminEmployeesTab" style="display:none;">Employees</button>
   </div>
@@ -286,6 +286,22 @@
   </div>
 </div>
 
+<div id="clockOutOverlay" class="overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Work Day Complete!</h2>
+      <p>You have completed 8 hours of work.</p>
+    </div>
+    <div style="text-align:center;margin:20px 0;">
+      <div style="font-size:2rem;font-weight:700;color:var(--success);" id="clockOutTime"></div>
+      <div style="color:var(--gray-500);margin-top:8px;">Eastern Time</div>
+    </div>
+    <div class="actions">
+      <button onclick="doClockOut()" style="background:var(--success);color:white;">Clock Out</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script>
@@ -303,13 +319,26 @@ const ADMIN_PIN = "2468";
 const breakLimits = { firstBreak: 15, lunch: 60, lastBreak: 15 };
 
 let database;
-let selectedDate = new Date().toISOString().split('T')[0];
+let selectedDate = getEasternDate();
 let breakData = {};
 let logEntries = {};
 let employees = {};
-let currentTab = 'breaks';
+let currentTab = 'dashboard';
 let isUpdating = false;
 let reportData = [];
+let hasClockedOut = false;
+
+function getEasternTime() {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+}
+
+function getEasternDate() {
+  return getEasternTime().toISOString().split('T')[0];
+}
+
+function getEasternTimeString() {
+  return getEasternTime().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
 
 firebase.initializeApp(firebaseConfig);
 database = firebase.database();
@@ -713,6 +742,8 @@ document.querySelectorAll('input[name="role"]').forEach(r => {
 });
 
 document.getElementById('loginBtn').onclick = () => {
+  hasClockedOut = false;
+  sessionStorage.removeItem('btm_clockedOut');
   const role = document.querySelector('input[name="role"]:checked').value;
   if (role === 'employee') {
     const name = document.getElementById('empName').value.trim();
@@ -723,6 +754,9 @@ document.getElementById('loginBtn').onclick = () => {
       if (n.toLowerCase() === name.toLowerCase()) { found = n; break; }
     }
     if (!found || empList[found] !== pin) { alert('Invalid credentials'); return; }
+    if (!sessionStorage.getItem('btm_workStart')) {
+      sessionStorage.setItem('btm_workStart', Date.now());
+    }
     setSession('employee', found);
   } else {
     if (document.getElementById('adminPin').value !== ADMIN_PIN) { alert('Invalid Admin PIN'); return; }
@@ -852,13 +886,24 @@ document.getElementById('clearAllBtn').onclick = () => {
   saveToFirebase();
 };
 
+function doClockOut() {
+  hasClockedOut = true;
+  sessionStorage.setItem('btm_clockedOut', 'true');
+  sessionStorage.removeItem('btm_workStart');
+  setSession(null);
+  document.getElementById('clockOutOverlay').style.display = 'none';
+  document.getElementById('loginOverlay').style.display = 'flex';
+}
+
 setInterval(() => {
-  const lastActive = sessionStorage.getItem('btm_lastActive');
-  if (lastActive && Date.now() - parseInt(lastActive) > 8 * 60 * 60 * 1000) {
-    setSession(null);
-    document.getElementById('loginOverlay').style.display = 'flex';
+  const workStart = sessionStorage.getItem('btm_workStart');
+  const isEmployee = sessionStorage.getItem('btm_role') === 'employee';
+  const alreadyOut = sessionStorage.getItem('btm_clockedOut') === 'true';
+  
+  if (workStart && isEmployee && !alreadyOut && Date.now() - parseInt(workStart) > 8 * 60 * 60 * 1000) {
+    document.getElementById('clockOutTime').textContent = getEasternTimeString();
+    document.getElementById('clockOutOverlay').style.display = 'flex';
   }
-  sessionStorage.setItem('btm_lastActive', Date.now());
 }, 60000);
 
 ensureStructures();
