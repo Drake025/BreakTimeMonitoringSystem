@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Break Time Monitoring System</title>
+  <title>Break Time Monitoring</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -26,20 +26,19 @@
     }
     * { box-sizing: border-box; }
     body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); min-height: 100vh; margin: 0; padding: 0; color: var(--gray-700); }
+
     .company-header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; padding: 16px 32px; box-shadow: var(--shadow-md); }
     .company-header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
     .brand h1 { margin: 0; font-size: 1.4rem; font-weight: 600; }
     .brand-subtitle { font-size: 0.75rem; opacity: 0.85; }
-    
+
     .main-container { max-width: 1400px; margin: 0 auto; padding: 20px 32px; }
-    
-    /* Tabs */
+
     .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
     .tab { padding: 10px 20px; background: white; border: none; border-radius: var(--radius); cursor: pointer; font-size: 0.9rem; font-weight: 500; color: var(--gray-500); box-shadow: var(--shadow); }
     .tab:hover { background: var(--gray-100); }
     .tab.active { background: var(--primary); color: white; }
-    
-    /* Dashboard Cards */
+
     .dashboard-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
     .stat-card { background: white; padding: 20px; border-radius: var(--radius-lg); box-shadow: var(--shadow); }
     .stat-card h3 { margin: 0 0 8px; font-size: 0.8rem; color: var(--gray-500); text-transform: uppercase; }
@@ -47,8 +46,7 @@
     .stat-card.working .value { color: var(--success); }
     .stat-card.on-break .value { color: var(--warning); }
     .stat-card.late .value { color: var(--danger); }
-    
-    /* Employee Grid */
+
     .employee-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
     .emp-card { background: white; padding: 20px; border-radius: var(--radius-lg); box-shadow: var(--shadow); border-left: 4px solid var(--success); }
     .emp-card.on-break { border-left-color: var(--warning); }
@@ -63,17 +61,14 @@
     .emp-status.on-break { background: #fef3c7; color: #92400e; }
     .emp-status.late { background: #fee2e2; color: #991b1b; }
     .emp-details { font-size: 0.85rem; color: var(--gray-500); margin-top: 8px; }
-    
-    /* Topbar */
+
     .topbar { background: white; padding: 14px 20px; border-radius: var(--radius-lg); box-shadow: var(--shadow); display: flex; gap: 16px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
-    input[type="date"], input[type="text"], input[type="password"], select { padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: 0.85rem; font-family: inherit; }
+    input[type="date"], input[type="text"], input[type="password"] { padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: 0.85rem; font-family: inherit; }
     button { padding: 8px 16px; border: none; border-radius: var(--radius); cursor: pointer; font-size: 0.85rem; font-weight: 500; font-family: inherit; }
     button:hover { opacity: 0.9; }
     #todayBtn { background: var(--primary); color: white; }
     #exportBtn { background: var(--success); color: white; }
-    .right-tools { margin-left: auto; display: flex; gap: 10px; align-items: center; }
-    
-    /* User Section */
+
     .user-section { background: white; padding: 24px; border-radius: var(--radius-lg); box-shadow: var(--shadow); margin-bottom: 20px; }
     .user-section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
     .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
@@ -89,10 +84,9 @@
     .badge-admin { background: #dcfce7; color: #166534; }
     .badge-emp { background: #dbeafe; color: #1e40af; }
     .section-title { font-size: 0.8rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; margin-bottom: 10px; }
-    
-    /* Overlay */
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
-    .modal { background: white; padding: 28px; border-radius: var(--radius-lg); width: 380px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 28px; border-radius: var(--radius-lg); width: 380px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.5); }
     .modal-header { text-align: center; margin-bottom: 20px; }
     .modal-header h2 { margin: 0 0 4px; font-size: 1.3rem; }
     .field { margin: 12px 0; }
@@ -103,25 +97,29 @@
     #loginBtn { background: var(--primary); color: white; }
     #loginCancelBtn { background: var(--gray-100); }
     .hide { display: none; }
-    
-    /* Reports */
+
     .report-table { width: 100%; border-collapse: collapse; background: white; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); }
     .report-table th, .report-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--gray-200); }
     .report-table th { background: var(--gray-100); font-size: 0.8rem; text-transform: uppercase; color: var(--gray-500); }
     .report-table td { font-size: 0.9rem; }
     .report-table tr:hover { background: var(--gray-50); }
-    
-    /* Employee Management */
+
     .emp-list { max-height: 300px; overflow-y: auto; }
     .emp-list-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid var(--gray-200); }
     .emp-list-item:last-child { border-bottom: none; }
     .emp-list-item button { padding: 4px 10px; font-size: 0.75rem; }
     .btn-delete { background: var(--danger); color: white; }
     .btn-add { background: var(--success); color: white; }
-    
-    .sync-status { font-size: 0.75rem; color: var(--gray-500); }
-    .sync-status.synced { color: var(--success); }
-    
+
+    .sync-status { font-size: 0.75rem; color: rgba(255,255,255,0.8); }
+    .sync-status.synced { color: #86efac; }
+
+    .user-menu { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+    .user-menu .user-info { display: flex; align-items: center; gap: 8px; }
+    .user-menu .username { font-weight: 500; color: white; }
+    .user-menu button { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); }
+    .user-menu button:hover { background: rgba(255,255,255,0.3); }
+
     .tab-content { display: none; }
     .tab-content.active { display: block; }
   </style>
@@ -134,21 +132,27 @@
       <h1>Break Time Monitoring</h1>
       <div class="brand-subtitle">Employee Break Tracking System</div>
     </div>
+    <div class="user-menu" id="userMenu" style="display:none;">
+      <div class="user-info">
+        <span class="username" id="headerUserName"></span>
+        <span id="headerUserRole" class="badge"></span>
+      </div>
+      <button id="headerChangePinBtn" style="display:none;">Change PIN</button>
+      <button id="headerSwitchBtn">Switch Account</button>
+    </div>
     <div class="sync-status" id="syncStatus">● Syncing...</div>
   </div>
 </div>
 
 <div class="main-container">
-  <!-- Tabs -->
-  <div class="tabs">
-    <button class="tab active" onclick="showTab('dashboard')">Dashboard</button>
-    <button class="tab" onclick="showTab('breaks')">Break Logs</button>
-    <button class="tab" onclick="showTab('reports')">Reports</button>
+  <div class="tabs" id="mainTabs">
+    <button class="tab active" onclick="showTab('breaks')" id="breaksTab">Break Logs</button>
+    <button class="tab" onclick="showTab('dashboard')" id="dashboardTab" style="display:none;">Dashboard</button>
+    <button class="tab" onclick="showTab('reports')" id="reportsTab" style="display:none;">Reports</button>
     <button class="tab" onclick="showTab('employees')" id="adminEmployeesTab" style="display:none;">Employees</button>
   </div>
 
-  <!-- DASHBOARD TAB -->
-  <div id="dashboard" class="tab-content active">
+  <div id="dashboard" class="tab-content">
     <div class="dashboard-stats">
       <div class="stat-card working">
         <h3>Working</h3>
@@ -170,7 +174,6 @@
     <div class="employee-grid" id="employeeGrid"></div>
   </div>
 
-  <!-- BREAKS TAB -->
   <div id="breaks" class="tab-content">
     <div class="topbar">
       <label>Date:</label>
@@ -178,15 +181,10 @@
       <button id="todayBtn">Today</button>
       <button id="exportBtn">Export CSV</button>
       <button id="clearAllBtn" style="display:none;background:#dc2626;color:white;">Clear All Logs</button>
-      <div class="right-tools">
-        <span id="whoAmI" class="badge"></span>
-        <button id="switchAccountBtn">Switch Account</button>
-      </div>
     </div>
     <div id="users"></div>
   </div>
 
-  <!-- REPORTS TAB -->
   <div id="reports" class="tab-content">
     <div class="topbar">
       <label>From:</label>
@@ -211,7 +209,6 @@
     </table>
   </div>
 
-  <!-- EMPLOYEES TAB (Admin Only) -->
   <div id="employees" class="tab-content">
     <div class="user-section">
       <h3>Add New Employee</h3>
@@ -228,8 +225,7 @@
   </div>
 </div>
 
-<!-- Login Modal -->
-<div id="loginOverlay" class="overlay">
+<div id="loginOverlay" class="overlay" style="display:flex;">
   <div class="modal">
     <div class="modal-header">
       <h2>Welcome Back</h2>
@@ -265,12 +261,34 @@
   </div>
 </div>
 
-<!-- Firebase -->
+<div id="changePinOverlay" class="overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Change PIN</h2>
+      <p id="changePinUser"></p>
+    </div>
+    <div class="field">
+      <label>Current PIN</label>
+      <input id="currentPin" type="password" placeholder="Enter current PIN" />
+    </div>
+    <div class="field">
+      <label>New PIN</label>
+      <input id="newPin" type="password" placeholder="Enter new PIN" />
+    </div>
+    <div class="field">
+      <label>Confirm New PIN</label>
+      <input id="confirmPin" type="password" placeholder="Confirm new PIN" />
+    </div>
+    <div class="actions">
+      <button onclick="hideChangePin()" style="background:var(--gray-100);">Cancel</button>
+      <button onclick="saveNewPin()" style="background:var(--primary);color:white;">Save PIN</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
 <script>
-// ===== CONFIG =====
 const firebaseConfig = {
   apiKey: "AIzaSyB6HMUB9tjhfhjVmdFe3KrUc6YqtKM-xq4",
   authDomain: "breaktime-monitoring-system.firebaseapp.com",
@@ -281,51 +299,47 @@ const firebaseConfig = {
   appId: "1:13352620027:web:c0b9261fff5ec695ba055e"
 };
 
-// ===== STATE =====
+const ADMIN_PIN = "2468";
+const breakLimits = { firstBreak: 15, lunch: 60, lastBreak: 15 };
+
 let database;
 let selectedDate = new Date().toISOString().split('T')[0];
 let breakData = {};
 let logEntries = {};
 let employees = {};
-let currentTab = 'dashboard';
+let currentTab = 'breaks';
 let isUpdating = false;
+let reportData = [];
 
-// ===== FIREBASE =====
+firebase.initializeApp(firebaseConfig);
+database = firebase.database();
 
-function initFirebase() {
-  try {
-    firebase.initializeApp(firebaseConfig);
-    database = firebase.database();
-    
-    database.ref('.info/connected').on('value', snap => {
-      document.getElementById('syncStatus').innerHTML = snap.val() ? '● Synced' : '● Connecting...';
-      document.getElementById('syncStatus').className = snap.val() ? 'sync-status synced' : 'sync-status';
-    });
-    
-    database.ref('breakData').on('value', snap => {
-      const data = snap.val() || {};
-      breakData = data[selectedDate] || {};
-      ensureStructures();
-      if (!isUpdating && currentTab === 'dashboard') renderDashboard();
-      if (!isUpdating && currentTab === 'breaks') renderUserSection();
-    });
-    
-    database.ref('logs').on('value', snap => {
-      const data = snap.val() || {};
-      logEntries = data[selectedDate] || {};
-      ensureStructures();
-      if (!isUpdating && currentTab === 'breaks') renderUserSection();
-    });
-    
-    database.ref('employees').on('value', snap => {
-      employees = snap.val() || getDefaultEmployees();
-      ensureStructures();
-      renderEmployeeList();
-      if (isAdmin()) document.getElementById('adminEmployeesTab').style.display = 'inline-block';
-    });
-    
-  } catch(e) { console.error(e); }
-}
+database.ref('.info/connected').on('value', snap => {
+  document.getElementById('syncStatus').innerHTML = snap.val() ? '● Synced' : '● Connecting...';
+  document.getElementById('syncStatus').className = snap.val() ? 'sync-status synced' : 'sync-status';
+});
+
+database.ref('breakData').on('value', snap => {
+  const data = snap.val() || {};
+  breakData = data[selectedDate] || {};
+  ensureStructures();
+  if (currentTab === 'dashboard') renderDashboard();
+  if (currentTab === 'breaks') renderUserSection();
+});
+
+database.ref('logs').on('value', snap => {
+  const data = snap.val() || {};
+  logEntries = data[selectedDate] || {};
+  ensureStructures();
+  if (currentTab === 'breaks') renderUserSection();
+});
+
+database.ref('employees').on('value', snap => {
+  employees = snap.val() || getDefaultEmployees();
+  ensureStructures();
+  renderEmployeeList();
+  if (isAdmin()) document.getElementById('adminEmployeesTab').style.display = 'inline-block';
+});
 
 function getDefaultEmployees() {
   return {
@@ -341,22 +355,6 @@ function getDefaultEmployees() {
   };
 }
 
-function saveToFirebase() {
-  if (!database) return;
-  isUpdating = true;
-  database.ref('breakData/' + selectedDate).set(breakData);
-  database.ref('logs/' + selectedDate).set(logEntries);
-  database.ref('employees').set(employees);
-  // Refresh UI after save
-  if (currentTab === 'dashboard') renderDashboard();
-  if (currentTab === 'breaks') renderUserSection();
-  setTimeout(() => { isUpdating = false; }, 500);
-}
-
-const ADMIN_PIN = "2468";
-const breakLimits = { firstBreak: 15, lunch: 60, lastBreak: 15 };
-
-// ===== HELPERS =====
 function sanitizeId(str) { return str.replace(/[^a-z0-9]+/gi, '-').toLowerCase(); }
 function formatType(t) { return t === 'firstBreak' ? 'First Break' : t === 'lunch' ? 'Lunch' : 'Last Break'; }
 function fmtNow() { return new Date().toLocaleTimeString(); }
@@ -373,10 +371,26 @@ function setSession(role, user) {
   if (isAdmin()) document.getElementById('adminEmployeesTab').style.display = 'inline-block';
 }
 
-function getEmployeeNames() { return Object.keys(employees); }
+function getEmployees() {
+  const defaultEmp = getDefaultEmployees();
+  if (!employees || Object.keys(employees).length === 0) return defaultEmp;
+  return employees;
+}
+
+function getEmployeeNames() { return Object.keys(getEmployees()); }
 function getVisibleUsers() { return isAdmin() ? getEmployeeNames() : (currentUser() ? [currentUser()] : []); }
 
-// ===== DATA =====
+function saveToFirebase() {
+  if (!database) return;
+  isUpdating = true;
+  database.ref('breakData/' + selectedDate).set(breakData);
+  database.ref('logs/' + selectedDate).set(logEntries);
+  database.ref('employees').set(employees);
+  if (currentTab === 'dashboard') renderDashboard();
+  if (currentTab === 'breaks') renderUserSection();
+  setTimeout(() => { isUpdating = false; }, 500);
+}
+
 function ensureStructures() {
   getEmployeeNames().forEach(u => {
     if (!breakData[u]) breakData[u] = { firstBreak: {start:null,end:null}, lunch: {start:null,end:null}, lastBreak: {start:null,end:null}, activeBreak: null };
@@ -384,12 +398,18 @@ function ensureStructures() {
   });
 }
 
-// ===== TABS =====
 function showTab(tab) {
+  if ((tab === 'dashboard' || tab === 'reports' || tab === 'employees') && !isAdmin()) {
+    tab = 'breaks';
+  }
   currentTab = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
+  
+  const tabId = tab === 'dashboard' ? 'dashboardTab' : tab === 'breaks' ? 'breaksTab' : tab + 'Tab';
+  const tabEl = document.getElementById(tabId);
+  if (tabEl) tabEl.classList.add('active');
+  
   document.getElementById(tab).classList.add('active');
   
   if (tab === 'dashboard') renderDashboard();
@@ -398,7 +418,6 @@ function showTab(tab) {
   else if (tab === 'employees') renderEmployeeList();
 }
 
-// ===== DASHBOARD =====
 function renderDashboard() {
   const grid = document.getElementById('employeeGrid');
   grid.innerHTML = '';
@@ -430,7 +449,6 @@ function renderDashboard() {
       working++;
     }
     
-    // Count completed breaks
     ['firstBreak', 'lunch', 'lastBreak'].forEach(t => {
       if (state[t]?.start && state[t]?.end) totalBreaks++;
     });
@@ -459,7 +477,6 @@ function renderDashboard() {
   document.getElementById('statTotalBreaks').textContent = totalBreaks;
 }
 
-// ===== BREAKS TAB =====
 function renderUserSection() {
   const container = document.getElementById('users');
   container.innerHTML = '';
@@ -472,7 +489,6 @@ function renderUserSection() {
     const initials = user.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
     const activePill = active ? `<span class="pill">Active: ${formatType(active)}</span>` : '';
     
-    // Show controls only for employees (not admin)
     const controlsHtml = isEmp ? `
       <div class="section-title">Break Controls</div>
       <div class="controls">
@@ -514,8 +530,6 @@ function renderUserLog(user) {
   }).join('');
 }
 
-// ===== ACTIONS =====
-
 window.startBreak = function(user, type) {
   if (isUpdating) return;
   if (isAdmin()) { alert('Admin cannot start/end employee breaks.'); return; }
@@ -554,22 +568,9 @@ window.endBreak = function(user, type) {
 
 function addLog(user, msg) {
   if (!logEntries[user]) logEntries[user] = [];
-  // Check for duplicate
-  const lastMsg = logEntries[user][logEntries[user].length - 1];
-  if (lastMsg && lastMsg.includes(msg.split(' at: ')[1])) return;
   logEntries[user].push(msg);
 }
 
-function deleteUserLog(user) {
-  if (!confirm(`Delete all logs for ${user} on ${selectedDate}?`)) return;
-  
-  // Clear break data and logs for this user
-  breakData[user] = { firstBreak: {start:null,end:null}, lunch: {start:null,end:null}, lastBreak: {start:null,end:null}, activeBreak: null };
-  logEntries[user] = [];
-  saveToFirebase();
-}
-
-// ===== REPORTS =====
 function initReports() {
   const today = new Date();
   const weekAgo = new Date(today);
@@ -579,7 +580,6 @@ function initReports() {
   loadReport();
 }
 
-let reportData = [];
 function loadReport() {
   const from = document.getElementById('reportFrom').value;
   const to = document.getElementById('reportTo').value;
@@ -640,12 +640,11 @@ function exportReport() {
   a.click();
 }
 
-// ===== EMPLOYEE MANAGEMENT =====
 function renderEmployeeList() {
   const list = document.getElementById('empList');
-  list.innerHTML = Object.entries(employees).map(([name, pin]) => `
+  list.innerHTML = Object.keys(getEmployees()).map(name => `
     <div class="emp-list-item">
-      <span>${name} (PIN: ${pin})</span>
+      <span>${name}</span>
       <button class="btn-delete" onclick="removeEmployee('${name}')">Remove</button>
     </div>
   `).join('');
@@ -655,7 +654,7 @@ function addEmployee() {
   const name = document.getElementById('newEmpName').value.trim();
   const pin = document.getElementById('newEmpPin').value.trim();
   if (!name || !pin) { alert('Please enter name and PIN'); return; }
-  if (employees[name]) { alert('Employee already exists'); return; }
+  if (getEmployees()[name]) { alert('Employee already exists'); return; }
   
   employees[name] = pin;
   saveToFirebase();
@@ -672,18 +671,38 @@ function removeEmployee(name) {
   renderEmployeeList();
 }
 
-// ===== AUTH =====
-function showLogin() {
-  document.querySelector('input[name="role"][value="employee"]').checked = true;
-  document.getElementById('empFields').classList.remove('hide');
-  document.getElementById('adminFields').classList.add('hide');
-  document.getElementById('loginOverlay').style.display = 'flex';
-}
-function hideLogin() { document.getElementById('loginOverlay').style.display = 'none'; }
 function syncAuthUI() {
-  document.getElementById('whoAmI').textContent = isAdmin() ? 'Admin' : (currentUser() || '');
-  document.getElementById('whoAmI').className = 'badge ' + (isAdmin() ? 'badge-admin' : 'badge-emp');
-  document.getElementById('clearAllBtn').style.display = isAdmin() ? 'inline-block' : 'none';
+  const userMenu = document.getElementById('userMenu');
+  if (!userMenu) return;
+  
+  if (isAdmin() || currentUser()) {
+    userMenu.style.display = 'flex';
+    const nameEl = document.getElementById('headerUserName');
+    const roleEl = document.getElementById('headerUserRole');
+    const pinBtn = document.getElementById('headerChangePinBtn');
+    if (nameEl) nameEl.textContent = isAdmin() ? 'Admin' : currentUser();
+    if (roleEl) {
+      roleEl.textContent = isAdmin() ? 'Admin' : 'Employee';
+      roleEl.className = 'badge ' + (isAdmin() ? 'badge-admin' : 'badge-emp');
+    }
+    if (pinBtn) pinBtn.style.display = isAdmin() ? 'none' : 'inline-block';
+  } else {
+    userMenu.style.display = 'none';
+  }
+  
+  const clearBtn = document.getElementById('clearAllBtn');
+  if (clearBtn) clearBtn.style.display = isAdmin() ? 'inline-block' : 'none';
+  
+  const dashTab = document.getElementById('dashboardTab');
+  const repTab = document.getElementById('reportsTab');
+  const empTab = document.getElementById('adminEmployeesTab');
+  if (dashTab) dashTab.style.display = isAdmin() ? 'inline-block' : 'none';
+  if (repTab) repTab.style.display = isAdmin() ? 'inline-block' : 'none';
+  if (empTab) empTab.style.display = isAdmin() ? 'inline-block' : 'none';
+  
+  if (!isAdmin()) {
+    showTab('breaks');
+  }
 }
 
 document.querySelectorAll('input[name="role"]').forEach(r => {
@@ -698,38 +717,85 @@ document.getElementById('loginBtn').onclick = () => {
   if (role === 'employee') {
     const name = document.getElementById('empName').value.trim();
     const pin = document.getElementById('empPin').value;
-    if (employees[name] !== pin) { alert('Invalid credentials'); return; }
-    setSession('employee', name);
+    const empList = getEmployees();
+    let found = null;
+    for (let n of Object.keys(empList)) {
+      if (n.toLowerCase() === name.toLowerCase()) { found = n; break; }
+    }
+    if (!found || empList[found] !== pin) { alert('Invalid credentials'); return; }
+    setSession('employee', found);
   } else {
     if (document.getElementById('adminPin').value !== ADMIN_PIN) { alert('Invalid Admin PIN'); return; }
     setSession('admin');
   }
   hideLogin();
-  showTab('dashboard');
+  if (isAdmin()) {
+    showTab('dashboard');
+  } else {
+    showTab('breaks');
+  }
 };
+
+function hideLogin() { 
+  document.getElementById('loginOverlay').style.display = 'none'; 
+}
 
 document.getElementById('loginCancelBtn').onclick = () => {
   if (!sessionStorage.getItem('btm_role')) { alert('You must sign in'); return; }
   hideLogin();
 };
 
-document.getElementById('switchAccountBtn').onclick = () => {
-  setSession(null);
-  showTab('dashboard');
-  showLogin();
+document.getElementById('headerChangePinBtn').onclick = () => {
+  document.getElementById('changePinUser').textContent = currentUser();
+  document.getElementById('currentPin').value = '';
+  document.getElementById('newPin').value = '';
+  document.getElementById('confirmPin').value = '';
+  document.getElementById('changePinOverlay').style.display = 'flex';
 };
 
-// ===== AUTO LOGOUT (8 hours) =====
-setInterval(() => {
-  const lastActive = sessionStorage.getItem('btm_lastActive');
-  if (lastActive && Date.now() - parseInt(lastActive) > 8 * 60 * 60 * 1000) {
-    setSession(null);
-    showLogin();
-  }
-  sessionStorage.setItem('btm_lastActive', Date.now());
-}, 60000);
+function hideChangePin() {
+  document.getElementById('changePinOverlay').style.display = 'none';
+}
 
-// ===== INIT =====
+function saveNewPin() {
+  const current = document.getElementById('currentPin').value;
+  const newPin = document.getElementById('newPin').value;
+  const confirm = document.getElementById('confirmPin').value;
+  
+  if (!current || !newPin || !confirm) {
+    alert('Please fill in all fields');
+    return;
+  }
+  
+  const empList = getEmployees();
+  const user = currentUser();
+  
+  if (empList[user] !== current) {
+    alert('Current PIN is incorrect');
+    return;
+  }
+  
+  if (newPin !== confirm) {
+    alert('New PINs do not match');
+    return;
+  }
+  
+  if (newPin.length < 4) {
+    alert('PIN must be at least 4 characters');
+    return;
+  }
+  
+  employees[user] = newPin;
+  saveToFirebase();
+  hideChangePin();
+  alert('PIN changed successfully!');
+}
+
+document.getElementById('headerSwitchBtn').onclick = () => {
+  setSession(null);
+  document.getElementById('loginOverlay').style.display = 'flex';
+};
+
 document.getElementById('datePicker').value = selectedDate;
 document.getElementById('datePicker').onchange = e => { 
   selectedDate = e.target.value; 
@@ -742,6 +808,7 @@ document.getElementById('datePicker').onchange = e => {
     });
   });
 };
+
 document.getElementById('todayBtn').onclick = () => { 
   selectedDate = new Date().toISOString().split('T')[0]; 
   document.getElementById('datePicker').value = selectedDate;
@@ -755,6 +822,7 @@ document.getElementById('todayBtn').onclick = () => {
     });
   });
 };
+
 document.getElementById('exportBtn').onclick = () => {
   const rows = [['Date','User','Break Type','Start','End','Duration (min)','Exceeded']];
   getVisibleUsers().forEach(u => {
@@ -784,14 +852,20 @@ document.getElementById('clearAllBtn').onclick = () => {
   saveToFirebase();
 };
 
-initFirebase();
+setInterval(() => {
+  const lastActive = sessionStorage.getItem('btm_lastActive');
+  if (lastActive && Date.now() - parseInt(lastActive) > 8 * 60 * 60 * 1000) {
+    setSession(null);
+    document.getElementById('loginOverlay').style.display = 'flex';
+  }
+  sessionStorage.setItem('btm_lastActive', Date.now());
+}, 60000);
+
 ensureStructures();
 
 if (sessionStorage.getItem('btm_role')) {
+  hideLogin();
   syncAuthUI();
-  if (isAdmin()) document.getElementById('adminEmployeesTab').style.display = 'inline-block';
-} else {
-  showLogin();
 }
 </script>
 </body>
