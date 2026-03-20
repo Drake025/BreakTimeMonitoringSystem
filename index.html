@@ -146,7 +146,7 @@
 
 <div class="main-container">
   <div class="tabs" id="mainTabs">
-    <button class="tab active" onclick="showTab('dashboard')" id="dashboardTab">Dashboard</button>
+    <button class="tab active" onclick="showTab('dashboard')" id="dashboardTab" style="display:none;">Dashboard</button>
     <button class="tab" onclick="showTab('breaks')" id="breaksTab">Break Logs</button>
     <button class="tab" onclick="showTab('reports')" id="reportsTab" style="display:none;">Reports</button>
     <button class="tab" onclick="showTab('employees')" id="adminEmployeesTab" style="display:none;">Employees</button>
@@ -163,7 +163,7 @@
         <div class="value" id="statOnBreak">0</div>
       </div>
       <div class="stat-card late">
-        <h3>Over Limit</h3>
+        <h3>Over Break</h3>
         <div class="value" id="statLate">0</div>
       </div>
       <div class="stat-card">
@@ -193,10 +193,13 @@
       <input type="date" id="reportTo" />
       <button onclick="loadReport()" style="background:var(--primary);color:white;">Load Report</button>
       <button onclick="exportReport()" style="background:var(--success);color:white;">Export Report</button>
+      <button onclick="deleteReportData()" style="background:var(--danger);color:white;">Delete Data</button>
     </div>
     <table class="report-table">
       <thead>
         <tr>
+          <th>Date</th>
+          <th>Team</th>
           <th>Employee</th>
           <th>First Break</th>
           <th>Lunch</th>
@@ -211,15 +214,29 @@
 
   <div id="employees" class="tab-content">
     <div class="user-section">
+      <h3>Add New Team</h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <input type="text" id="newTeamName" placeholder="Team Name" style="flex:1;min-width:200px;" />
+        <button onclick="addTeam()" class="btn-add" style="background:var(--primary);">Add Team</button>
+      </div>
+    </div>
+    <div class="user-section">
       <h3>Add New Employee</h3>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <input type="text" id="newEmpName" placeholder="Employee Name" style="flex:1;min-width:200px;" />
         <input type="text" id="newEmpPin" placeholder="PIN" style="width:100px;" />
+        <select id="newEmpTeam" style="padding:8px 12px;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.85rem;">
+          <option value="">Select Team</option>
+        </select>
         <button onclick="addEmployee()" class="btn-add">Add Employee</button>
       </div>
     </div>
     <div class="user-section">
-      <h3>Employee List</h3>
+      <h3>Manage Teams</h3>
+      <div class="emp-list" id="teamList"></div>
+    </div>
+    <div class="user-section">
+      <h3>Employee List by Team</h3>
       <div class="emp-list" id="empList"></div>
     </div>
   </div>
@@ -286,22 +303,6 @@
   </div>
 </div>
 
-<div id="clockOutOverlay" class="overlay">
-  <div class="modal">
-    <div class="modal-header">
-      <h2>Work Day Complete!</h2>
-      <p>You have completed 8 hours of work.</p>
-    </div>
-    <div style="text-align:center;margin:20px 0;">
-      <div style="font-size:2rem;font-weight:700;color:var(--success);" id="clockOutTime"></div>
-      <div style="color:var(--gray-500);margin-top:8px;">Eastern Time</div>
-    </div>
-    <div class="actions">
-      <button onclick="doClockOut()" style="background:var(--success);color:white;">Clock Out</button>
-    </div>
-  </div>
-</div>
-
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script>
@@ -319,26 +320,15 @@ const ADMIN_PIN = "2468";
 const breakLimits = { firstBreak: 15, lunch: 60, lastBreak: 15 };
 
 let database;
-let selectedDate = getEasternDate();
+let selectedDate = new Date().toISOString().split('T')[0];
 let breakData = {};
 let logEntries = {};
 let employees = {};
-let currentTab = 'dashboard';
+let currentTab = 'breaks';
 let isUpdating = false;
 let reportData = [];
-let hasClockedOut = false;
-
-function getEasternTime() {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
-}
-
-function getEasternDate() {
-  return getEasternTime().toISOString().split('T')[0];
-}
-
-function getEasternTimeString() {
-  return getEasternTime().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-}
+let employeeTeams = {};
+let customTeams = ["East 1.0", "East 2.0", "West 1.0"];
 
 firebase.initializeApp(firebaseConfig);
 database = firebase.database();
@@ -370,18 +360,69 @@ database.ref('employees').on('value', snap => {
   if (isAdmin()) document.getElementById('adminEmployeesTab').style.display = 'inline-block';
 });
 
+database.ref('employeeTeams').on('value', snap => {
+  employeeTeams = snap.val() || {};
+});
+
+database.ref('customTeams').on('value', snap => {
+  customTeams = snap.val() || ["East 1.0", "East 2.0", "West 1.0"];
+  updateTeamDropdown();
+  renderTeamList();
+});
+
+const defaultTeams = {
+  "East 1.0": ["Prince Jeremie Malana", "MATT", "XERXIS"],
+  "East 2.0": ["CENT", "MAK", "WINSLET"],
+  "West 1.0": ["GLADYS", "JESSICARTS", "MLORIDA"]
+};
+
 function getDefaultEmployees() {
-  return {
-    "Prince Jeremie Malana": "0000",
-    "MATT": "0000",
-    "XERXIS": "0000",
-    "CENT": "0000",
-    "MAK": "0000",
-    "WINSLET": "0000",
-    "GLADYS": "0000",
-    "JESSICARTS": "0000",
-    "MLORIDA": "0000"
-  };
+  const emps = {};
+  Object.values(defaultTeams).flat().forEach(name => { emps[name] = "0000"; });
+  return emps;
+}
+
+function getDefaultTeams() {
+  const teams = {};
+  Object.keys(defaultTeams).forEach(team => {
+    teams[team] = defaultTeams[team].filter(name => employees[name] || getDefaultEmployees()[name]);
+  });
+  Object.keys(teams).forEach(t => { if (teams[t].length === 0) delete teams[t]; });
+  return teams;
+}
+
+function getEmployeeTeam(name) {
+  if (employeeTeams[name]) return employeeTeams[name];
+  for (const team of Object.keys(defaultTeams)) {
+    if (defaultTeams[team].includes(name)) return team;
+  }
+  return 'Unassigned';
+}
+
+function getAllTeams() {
+  return customTeams;
+}
+
+function addTeam() {
+  const name = document.getElementById('newTeamName').value.trim();
+  if (!name) { alert('Please enter a team name'); return; }
+  if (customTeams.includes(name)) { alert('Team already exists'); return; }
+  
+  customTeams.push(name);
+  database.ref('customTeams').set(customTeams);
+  updateTeamDropdown();
+  document.getElementById('newTeamName').value = '';
+  alert('Team added successfully!');
+}
+
+function updateTeamDropdown() {
+  const select = document.getElementById('newEmpTeam');
+  if (!select) return;
+  select.innerHTML = '<option value="">Select Team</option>';
+  customTeams.forEach(team => {
+    select.innerHTML += `<option value="${team}">${team}</option>`;
+  });
+  select.innerHTML += '<option value="Unassigned">Unassigned</option>';
 }
 
 function sanitizeId(str) { return str.replace(/[^a-z0-9]+/gi, '-').toLowerCase(); }
@@ -444,7 +485,7 @@ function showTab(tab) {
   if (tab === 'dashboard') renderDashboard();
   else if (tab === 'breaks') renderUserSection();
   else if (tab === 'reports') initReports();
-  else if (tab === 'employees') renderEmployeeList();
+  else if (tab === 'employees') { renderEmployeeList(); renderTeamList(); updateTeamDropdown(); }
 }
 
 function renderDashboard() {
@@ -454,50 +495,60 @@ function renderDashboard() {
   let working = 0, onBreak = 0, late = 0, totalBreaks = 0;
   const names = getEmployeeNames();
   
+  const teams = {};
   names.forEach(name => {
-    const state = breakData[name] || {};
-    const active = state.activeBreak;
-    let status = 'Working', statusClass = 'working', duration = '';
-    
-    if (active) {
-      onBreak++;
-      status = 'On Break';
-      statusClass = 'on-break';
-      const start = state[active]?.start;
-      if (start) {
-        const mins = minsDiff(new Date(start), new Date());
-        const limit = breakLimits[active];
-        if (mins > limit) {
-          status = 'Over Limit!';
-          statusClass = 'late';
-          late++;
+    const team = getEmployeeTeam(name);
+    if (!teams[team]) teams[team] = [];
+    teams[team].push(name);
+  });
+  
+  Object.keys(teams).sort().forEach(team => {
+    grid.innerHTML += `<div style="grid-column:1/-1;margin-top:16px;margin-bottom:8px;"><h3 style="color:var(--primary);border-bottom:2px solid var(--primary);padding-bottom:4px;">${team}</h3></div>`;
+    teams[team].forEach(name => {
+      const state = breakData[name] || {};
+      const active = state.activeBreak;
+      let status = 'Working', statusClass = 'working', duration = '';
+      
+      if (active) {
+        onBreak++;
+        status = 'On Break';
+        statusClass = 'on-break';
+        const start = state[active]?.start;
+        if (start) {
+          const mins = minsDiff(new Date(start), new Date());
+          const limit = breakLimits[active];
+          if (mins > limit) {
+            status = 'Over Limit!';
+            statusClass = 'late';
+            late++;
+          }
+          duration = ` - ${mins}m`;
         }
-        duration = ` - ${mins}m`;
+      } else {
+        working++;
       }
-    } else {
-      working++;
-    }
-    
-    ['firstBreak', 'lunch', 'lastBreak'].forEach(t => {
-      if (state[t]?.start && state[t]?.end) totalBreaks++;
-    });
-    
-    const initials = name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
-    
-    grid.innerHTML += `
-      <div class="emp-card ${statusClass}">
-        <div class="emp-card-header">
-          <div class="emp-avatar">${initials}</div>
-          <div>
-            <div class="emp-name">${name}</div>
-            <span class="emp-status ${statusClass}">${status}${duration}</span>
+      
+      ['firstBreak', 'lunch', 'lastBreak'].forEach(t => {
+        if (state[t]?.start && state[t]?.end) totalBreaks++;
+      });
+      
+      const initials = name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+      
+      grid.innerHTML += `
+        <div class="emp-card ${statusClass}">
+          <div class="emp-card-header">
+            <div class="emp-avatar">${initials}</div>
+            <div>
+              <div class="emp-name">${name}</div>
+              <span class="emp-status ${statusClass}">${status}${duration}</span>
+            </div>
+          </div>
+          <div class="emp-details">
+            ${active ? `${formatType(active)} started at ${new Date(state[active].start).toLocaleTimeString()}` : 'Currently working'}
           </div>
         </div>
-        <div class="emp-details">
-          ${active ? `${formatType(active)} started at ${new Date(state[active].start).toLocaleTimeString()}` : 'Currently working'}
-        </div>
-      </div>
-    `;
+      `;
+    });
   });
   
   document.getElementById('statWorking').textContent = working;
@@ -597,6 +648,8 @@ window.endBreak = function(user, type) {
 
 function addLog(user, msg) {
   if (!logEntries[user]) logEntries[user] = [];
+  const lastEntry = logEntries[user][logEntries[user].length - 1];
+  if (lastEntry === msg) return;
   logEntries[user].push(msg);
 }
 
@@ -613,42 +666,56 @@ function loadReport() {
   const from = document.getElementById('reportFrom').value;
   const to = document.getElementById('reportTo').value;
   const tbody = document.getElementById('reportBody');
-  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Loading...</td></tr>';
   
   database.ref('breakData').once('value', snap => {
     const allData = snap.val() || {};
     reportData = [];
     
-    getEmployeeNames().forEach(name => {
-      let firstTotal = 0, lunchTotal = 0, lastTotal = 0, exceeded = 0;
-      
-      for (let d = new Date(from); d <= new Date(to); d.setDate(d.getDate() + 1)) {
-        const dateStr = d.toISOString().split('T')[0];
+    const dates = [];
+    for (let d = new Date(from); d <= new Date(to); d.setDate(d.getDate() + 1)) {
+      dates.push(d.toISOString().split('T')[0]);
+    }
+    
+    dates.forEach(dateStr => {
+      getEmployeeNames().forEach(name => {
         const dayData = allData[dateStr]?.[name];
-        if (!dayData) continue;
+        if (!dayData) return;
+        
+        let firstTotal = 0, lunchTotal = 0, lastTotal = 0, exceeded = 0;
         
         ['firstBreak', 'lunch', 'lastBreak'].forEach((type, idx) => {
           if (dayData[type]?.start && dayData[type]?.end) {
             const mins = minsDiff(new Date(dayData[type].start), new Date(dayData[type].end));
-            if (idx === 0) firstTotal += mins;
-            else if (idx === 1) lunchTotal += mins;
-            else lastTotal += mins;
+            if (idx === 0) firstTotal = mins;
+            else if (idx === 1) lunchTotal = mins;
+            else lastTotal = mins;
             
             const limit = breakLimits[type];
             if (mins > limit) exceeded += (mins - limit);
           }
         });
-      }
-      
-      reportData.push({ name, firstTotal, lunchTotal, lastTotal, total: firstTotal + lunchTotal + lastTotal, exceeded });
+        
+        if (firstTotal > 0 || lunchTotal > 0 || lastTotal > 0) {
+          reportData.push({ date: dateStr, team: getEmployeeTeam(name), name, firstTotal, lunchTotal, lastTotal, total: firstTotal + lunchTotal + lastTotal, exceeded });
+        }
+      });
+    });
+    
+    reportData.sort((a, b) => {
+      if (a.date !== b.date) return b.date.localeCompare(a.date);
+      if (a.team !== b.team) return a.team.localeCompare(b.team);
+      return a.name.localeCompare(b.name);
     });
     
     tbody.innerHTML = reportData.map(r => `
       <tr>
+        <td>${r.date}</td>
+        <td>${r.team}</td>
         <td>${r.name}</td>
-        <td>${r.firstTotal}m</td>
-        <td>${r.lunchTotal}m</td>
-        <td>${r.lastTotal}m</td>
+        <td>${r.firstTotal > 0 ? r.firstTotal + 'm' : '-'}</td>
+        <td>${r.lunchTotal > 0 ? r.lunchTotal + 'm' : '-'}</td>
+        <td>${r.lastTotal > 0 ? r.lastTotal + 'm' : '-'}</td>
         <td>${r.total}m</td>
         <td style="color:${r.exceeded > 0 ? '#dc2626' : '#059669'};font-weight:${r.exceeded > 0 ? '600' : '400'};">${r.exceeded > 0 ? r.exceeded + 'm' : '-'}</td>
       </tr>
@@ -658,8 +725,8 @@ function loadReport() {
 
 function exportReport() {
   if (!reportData.length) { alert('No data to export'); return; }
-  const rows = [['Employee', 'First Break (m)', 'Lunch (m)', 'Last Break (m)', 'Total (m)', 'Exceeded (m)']];
-  reportData.forEach(r => rows.push([r.name, r.firstTotal, r.lunchTotal, r.lastTotal, r.total, r.exceeded]));
+  const rows = [['Date', 'Team', 'Employee', 'First Break (m)', 'Lunch (m)', 'Last Break (m)', 'Total (m)', 'Exceeded (m)']];
+  reportData.forEach(r => rows.push([r.date, r.team, r.name, r.firstTotal, r.lunchTotal, r.lastTotal, r.total, r.exceeded]));
   
   const csv = rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
@@ -669,26 +736,98 @@ function exportReport() {
   a.click();
 }
 
+function deleteReportData() {
+  const from = document.getElementById('reportFrom').value;
+  const to = document.getElementById('reportTo').value;
+  if (!confirm(`Delete all break data from ${from} to ${to}? This cannot be undone.`)) return;
+  
+  const dates = [];
+  for (let d = new Date(from); d <= new Date(to); d.setDate(d.getDate() + 1)) {
+    dates.push(d.toISOString().split('T')[0]);
+  }
+  
+  dates.forEach(dateStr => {
+    database.ref('breakData/' + dateStr).remove();
+    database.ref('logs/' + dateStr).remove();
+  });
+  
+  alert('Data deleted successfully!');
+  loadReport();
+}
+
 function renderEmployeeList() {
+  renderTeamList();
   const list = document.getElementById('empList');
-  list.innerHTML = Object.keys(getEmployees()).map(name => `
+  const emps = getEmployees();
+  const teams = {};
+  
+  Object.keys(emps).forEach(name => {
+    const team = getEmployeeTeam(name);
+    if (!teams[team]) teams[team] = [];
+    teams[team].push(name);
+  });
+  
+  Object.keys(teams).sort().forEach(team => teams[team].sort());
+  
+  let html = '';
+  Object.keys(teams).sort().forEach(team => {
+    html += `<div style="margin-bottom:16px;"><h4 style="margin:0 0 8px;color:var(--primary);">${team}</h4>`;
+    teams[team].forEach(name => {
+      html += `<div class="emp-list-item"><span>${name}</span><button class="btn-delete" onclick="removeEmployee('${name}')">Remove</button></div>`;
+    });
+    html += '</div>';
+  });
+  
+  list.innerHTML = html || '<div style="color:var(--gray-500);">No employees found.</div>';
+}
+
+function renderTeamList() {
+  const list = document.getElementById('teamList');
+  if (!list) return;
+  const list2 = document.getElementById('empList');
+  if (!list2) return;
+  
+  list.innerHTML = customTeams.map(team => `
     <div class="emp-list-item">
-      <span>${name}</span>
-      <button class="btn-delete" onclick="removeEmployee('${name}')">Remove</button>
+      <span style="font-weight:600;">${team}</span>
+      <button class="btn-delete" onclick="deleteTeam('${team}')">Delete Team</button>
     </div>
-  `).join('');
+  `).join('') || '<div style="color:var(--gray-500);">No teams found.</div>';
+}
+
+function deleteTeam(team) {
+  if (!confirm(`Delete team "${team}"? Employees will become Unassigned.`)) return;
+  
+  customTeams = customTeams.filter(t => t !== team);
+  database.ref('customTeams').set(customTeams);
+  
+  Object.keys(employeeTeams).forEach(name => {
+    if (employeeTeams[name] === team) {
+      delete employeeTeams[name];
+    }
+  });
+  database.ref('employeeTeams').set(employeeTeams);
+  
+  updateTeamDropdown();
+  renderTeamList();
+  renderEmployeeList();
+  alert('Team deleted successfully!');
 }
 
 function addEmployee() {
   const name = document.getElementById('newEmpName').value.trim();
   const pin = document.getElementById('newEmpPin').value.trim();
+  const team = document.getElementById('newEmpTeam').value || 'Unassigned';
   if (!name || !pin) { alert('Please enter name and PIN'); return; }
   if (getEmployees()[name]) { alert('Employee already exists'); return; }
   
   employees[name] = pin;
+  employeeTeams[name] = team;
+  database.ref('employeeTeams').set(employeeTeams);
   saveToFirebase();
   document.getElementById('newEmpName').value = '';
   document.getElementById('newEmpPin').value = '';
+  document.getElementById('newEmpTeam').value = '';
   renderEmployeeList();
   alert('Employee added successfully!');
 }
@@ -742,8 +881,6 @@ document.querySelectorAll('input[name="role"]').forEach(r => {
 });
 
 document.getElementById('loginBtn').onclick = () => {
-  hasClockedOut = false;
-  sessionStorage.removeItem('btm_clockedOut');
   const role = document.querySelector('input[name="role"]:checked').value;
   if (role === 'employee') {
     const name = document.getElementById('empName').value.trim();
@@ -754,9 +891,6 @@ document.getElementById('loginBtn').onclick = () => {
       if (n.toLowerCase() === name.toLowerCase()) { found = n; break; }
     }
     if (!found || empList[found] !== pin) { alert('Invalid credentials'); return; }
-    if (!sessionStorage.getItem('btm_workStart')) {
-      sessionStorage.setItem('btm_workStart', Date.now());
-    }
     setSession('employee', found);
   } else {
     if (document.getElementById('adminPin').value !== ADMIN_PIN) { alert('Invalid Admin PIN'); return; }
@@ -886,27 +1020,17 @@ document.getElementById('clearAllBtn').onclick = () => {
   saveToFirebase();
 };
 
-function doClockOut() {
-  hasClockedOut = true;
-  sessionStorage.setItem('btm_clockedOut', 'true');
-  sessionStorage.removeItem('btm_workStart');
-  setSession(null);
-  document.getElementById('clockOutOverlay').style.display = 'none';
-  document.getElementById('loginOverlay').style.display = 'flex';
-}
-
 setInterval(() => {
-  const workStart = sessionStorage.getItem('btm_workStart');
-  const isEmployee = sessionStorage.getItem('btm_role') === 'employee';
-  const alreadyOut = sessionStorage.getItem('btm_clockedOut') === 'true';
-  
-  if (workStart && isEmployee && !alreadyOut && Date.now() - parseInt(workStart) > 8 * 60 * 60 * 1000) {
-    document.getElementById('clockOutTime').textContent = getEasternTimeString();
-    document.getElementById('clockOutOverlay').style.display = 'flex';
+  const lastActive = sessionStorage.getItem('btm_lastActive');
+  if (lastActive && Date.now() - parseInt(lastActive) > 8 * 60 * 60 * 1000) {
+    setSession(null);
+    document.getElementById('loginOverlay').style.display = 'flex';
   }
+  sessionStorage.setItem('btm_lastActive', Date.now());
 }, 60000);
 
 ensureStructures();
+updateTeamDropdown();
 
 if (sessionStorage.getItem('btm_role')) {
   hideLogin();
