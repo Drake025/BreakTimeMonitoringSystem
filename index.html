@@ -137,7 +137,7 @@
         <span class="username" id="headerUserName"></span>
         <span id="headerUserRole" class="badge"></span>
       </div>
-      <button id="headerChangePinBtn" style="display:none;">Change PIN</button>
+      <button id="headerChangePinBtn" style="display:none;">Change Password</button>
       <button id="headerSwitchBtn">Switch Account</button>
     </div>
     <div class="sync-status" id="syncStatus">● Syncing...</div>
@@ -227,7 +227,7 @@
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <input type="text" id="newEmpName" placeholder="Full Name" style="flex:1;min-width:200px;" />
         <input type="text" id="newEmpUsername" placeholder="Username" style="width:120px;" />
-        <input type="text" id="newEmpPin" placeholder="PIN" style="width:100px;" />
+        <input type="password" id="newEmpPin" placeholder="Password" style="width:100px;" />
         <select id="newEmpTeam" style="padding:8px 12px;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.85rem;">
           <option value="">Select Team</option>
         </select>
@@ -260,12 +260,12 @@
     </div>
     <div id="empFields">
       <div class="field">
-        <label>Employee Name</label>
-        <input id="empName" type="text" placeholder="Your name" />
+        <label>Username</label>
+        <input id="empName" type="text" placeholder="Username" />
       </div>
       <div class="field">
-        <label>PIN</label>
-        <input id="empPin" type="password" placeholder="Your PIN" />
+        <label>Password</label>
+        <input id="empPin" type="password" placeholder="Password" />
       </div>
     </div>
     <div id="adminFields" class="hide">
@@ -284,24 +284,24 @@
 <div id="changePinOverlay" class="overlay">
   <div class="modal">
     <div class="modal-header">
-      <h2>Change PIN</h2>
+      <h2>Change Password</h2>
       <p id="changePinUser"></p>
     </div>
     <div class="field">
-      <label>Current PIN</label>
-      <input id="currentPin" type="password" placeholder="Enter current PIN" />
+      <label>Current Password</label>
+      <input id="currentPin" type="password" placeholder="Enter current password" />
     </div>
     <div class="field">
-      <label>New PIN</label>
-      <input id="newPin" type="password" placeholder="Enter new PIN" />
+      <label>New Password</label>
+      <input id="newPin" type="password" placeholder="Enter new password" />
     </div>
     <div class="field">
-      <label>Confirm New PIN</label>
-      <input id="confirmPin" type="password" placeholder="Confirm new PIN" />
+      <label>Confirm New Password</label>
+      <input id="confirmPin" type="password" placeholder="Confirm new password" />
     </div>
     <div class="actions">
       <button onclick="hideChangePin()" style="background:var(--gray-100);">Cancel</button>
-      <button onclick="saveNewPin()" style="background:var(--primary);color:white;">Save PIN</button>
+      <button onclick="saveNewPin()" style="background:var(--primary);color:white;">Save Password</button>
     </div>
   </div>
 </div>
@@ -913,7 +913,7 @@ function addEmployee() {
   const username = document.getElementById('newEmpUsername').value.trim();
   const pin = document.getElementById('newEmpPin').value.trim();
   const team = document.getElementById('newEmpTeam').value || 'Unassigned';
-  if (!name || !pin) { alert('Please enter name and PIN'); return; }
+  if (!name || !pin) { alert('Please enter name and password'); return; }
   if (getEmployees()[name]) { alert('Employee already exists'); return; }
   if (username && employeeUsernames[username]) { alert('Username already taken'); return; }
   
@@ -1003,7 +1003,7 @@ document.getElementById('loginBtn').onclick = () => {
       }
     }
     
-    if (!found || empList[found] !== pin) { alert('Invalid credentials'); return; }
+    if (!found || empList[found] !== pin) { alert('Invalid username or password'); return; }
     setSession('employee', found);
   } else {
     if (document.getElementById('adminPin').value !== ADMIN_PIN) { alert('Invalid Admin PIN'); return; }
@@ -1052,17 +1052,17 @@ function saveNewPin() {
   const user = currentUser();
   
   if (empList[user] !== current) {
-    alert('Current PIN is incorrect');
+    alert('Current password is incorrect');
     return;
   }
   
   if (newPin !== confirm) {
-    alert('New PINs do not match');
+    alert('New passwords do not match');
     return;
   }
   
   if (newPin.length < 4) {
-    alert('PIN must be at least 4 characters');
+    alert('Password must be at least 4 characters');
     return;
   }
   
