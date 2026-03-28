@@ -192,9 +192,11 @@
       <label>To:</label>
       <input type="date" id="reportTo" />
       <button onclick="loadReport()" style="background:var(--primary);color:white;">Load Report</button>
+      <button onclick="loadAllReport()" style="background:#7c3aed;color:white;">Show All Data</button>
       <button onclick="exportReport()" style="background:var(--success);color:white;">Export Report</button>
       <button onclick="deleteReportData()" style="background:var(--danger);color:white;">Delete Data</button>
     </div>
+
     <table class="report-table">
       <thead>
         <tr>
@@ -223,7 +225,8 @@
     <div class="user-section">
       <h3>Add New Employee</h3>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <input type="text" id="newEmpName" placeholder="Employee Name" style="flex:1;min-width:200px;" />
+        <input type="text" id="newEmpName" placeholder="Full Name" style="flex:1;min-width:200px;" />
+        <input type="text" id="newEmpUsername" placeholder="Username" style="width:120px;" />
         <input type="text" id="newEmpPin" placeholder="PIN" style="width:100px;" />
         <select id="newEmpTeam" style="padding:8px 12px;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.85rem;">
           <option value="">Select Team</option>
@@ -320,7 +323,7 @@ const ADMIN_PIN = "2468";
 const breakLimits = { firstBreak: 15, lunch: 60, lastBreak: 15 };
 
 let database;
-let selectedDate = new Date().toISOString().split('T')[0];
+let selectedDate = formatDateLocal(new Date());
 let breakData = {};
 let logEntries = {};
 let employees = {};
@@ -328,6 +331,7 @@ let currentTab = 'breaks';
 let isUpdating = false;
 let reportData = [];
 let employeeTeams = {};
+let employeeUsernames = {};
 let customTeams = ["East 1.0", "East 2.0", "West 1.0"];
 
 firebase.initializeApp(firebaseConfig);
@@ -353,50 +357,29 @@ database.ref('logs').on('value', snap => {
   if (currentTab === 'breaks') renderUserSection();
 });
 
-database.ref('employees').on('value', snap => {
-  employees = snap.val() || getDefaultEmployees();
+database.ref('employees').once('value', snap => {
+  employees = snap.val() || {};
   ensureStructures();
   renderEmployeeList();
   if (isAdmin()) document.getElementById('adminEmployeesTab').style.display = 'inline-block';
 });
 
-database.ref('employeeTeams').on('value', snap => {
+database.ref('employeeTeams').once('value', snap => {
   employeeTeams = snap.val() || {};
 });
 
-database.ref('customTeams').on('value', snap => {
-  customTeams = snap.val() || ["East 1.0", "East 2.0", "West 1.0"];
+database.ref('employeeUsernames').once('value', snap => {
+  employeeUsernames = snap.val() || {};
+});
+
+database.ref('customTeams').once('value', snap => {
+  customTeams = snap.val() || [];
   updateTeamDropdown();
   renderTeamList();
 });
 
-const defaultTeams = {
-  "East 1.0": ["Prince Jeremie Malana", "MATT", "XERXIS"],
-  "East 2.0": ["CENT", "MAK", "WINSLET"],
-  "West 1.0": ["GLADYS", "JESSICARTS", "MLORIDA"]
-};
-
-function getDefaultEmployees() {
-  const emps = {};
-  Object.values(defaultTeams).flat().forEach(name => { emps[name] = "0000"; });
-  return emps;
-}
-
-function getDefaultTeams() {
-  const teams = {};
-  Object.keys(defaultTeams).forEach(team => {
-    teams[team] = defaultTeams[team].filter(name => employees[name] || getDefaultEmployees()[name]);
-  });
-  Object.keys(teams).forEach(t => { if (teams[t].length === 0) delete teams[t]; });
-  return teams;
-}
-
 function getEmployeeTeam(name) {
-  if (employeeTeams[name]) return employeeTeams[name];
-  for (const team of Object.keys(defaultTeams)) {
-    if (defaultTeams[team].includes(name)) return team;
-  }
-  return 'Unassigned';
+  return employeeTeams[name] || 'Unassigned';
 }
 
 function getAllTeams() {
@@ -425,6 +408,19 @@ function updateTeamDropdown() {
   select.innerHTML += '<option value="Unassigned">Unassigned</option>';
 }
 
+function formatDateLocal(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function parseAnyDate(str) {
+  if (!str) return null;
+  str = str.trim();
+  if (str.indexOf('/') !== -1) {
+    const parts = str.split('/');
+    if (parts.length !== 3) return null;
+    return new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
+  }
+  const parts = str.split('-');
+  if (parts.length !== 3) return null;
+  return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+}
 function sanitizeId(str) { return str.replace(/[^a-z0-9]+/gi, '-').toLowerCase(); }
 function formatType(t) { return t === 'firstBreak' ? 'First Break' : t === 'lunch' ? 'Lunch' : 'Last Break'; }
 function fmtNow() { return new Date().toLocaleTimeString(); }
@@ -442,8 +438,6 @@ function setSession(role, user) {
 }
 
 function getEmployees() {
-  const defaultEmp = getDefaultEmployees();
-  if (!employees || Object.keys(employees).length === 0) return defaultEmp;
   return employees;
 }
 
@@ -657,8 +651,8 @@ function initReports() {
   const today = new Date();
   const weekAgo = new Date(today);
   weekAgo.setDate(weekAgo.getDate() - 7);
-  document.getElementById('reportFrom').value = weekAgo.toISOString().split('T')[0];
-  document.getElementById('reportTo').value = today.toISOString().split('T')[0];
+  document.getElementById('reportFrom').value = formatDateLocal(weekAgo);
+  document.getElementById('reportTo').value = formatDateLocal(today);
   loadReport();
 }
 
@@ -666,48 +660,72 @@ function loadReport() {
   const from = document.getElementById('reportFrom').value;
   const to = document.getElementById('reportTo').value;
   const tbody = document.getElementById('reportBody');
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Loading...</td></tr>';
-  
+
+  if (!from || !to) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Please select date range</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Loading...</td></tr>';
+
+  const fromDate = new Date(from + 'T00:00:00');
+  const toDate = new Date(to + 'T23:59:59');
+
   database.ref('breakData').once('value', snap => {
-    const allData = snap.val() || {};
+    const allData = snap.val();
     reportData = [];
-    
-    const dates = [];
-    for (let d = new Date(from); d <= new Date(to); d.setDate(d.getDate() + 1)) {
-      dates.push(d.toISOString().split('T')[0]);
+
+    if (!allData) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No data</td></tr>';
+      return;
     }
-    
-    dates.forEach(dateStr => {
-      getEmployeeNames().forEach(name => {
-        const dayData = allData[dateStr]?.[name];
+
+    const allDateKeys = Object.keys(allData);
+
+    allDateKeys.forEach(dateKey => {
+      const parsed = parseAnyDate(dateKey);
+      if (!parsed) return;
+      if (parsed < fromDate || parsed > toDate) return;
+
+      const dateData = allData[dateKey];
+      if (!dateData) return;
+
+      Object.keys(dateData).forEach(name => {
+        const dayData = dateData[name];
         if (!dayData) return;
-        
+        if (!employees[name]) return;
+
         let firstTotal = 0, lunchTotal = 0, lastTotal = 0, exceeded = 0;
-        
+
         ['firstBreak', 'lunch', 'lastBreak'].forEach((type, idx) => {
-          if (dayData[type]?.start && dayData[type]?.end) {
-            const mins = minsDiff(new Date(dayData[type].start), new Date(dayData[type].end));
+          const rec = dayData[type];
+          if (rec && rec.start && rec.end) {
+            const mins = Math.round((new Date(rec.end) - new Date(rec.start)) / 60000);
             if (idx === 0) firstTotal = mins;
             else if (idx === 1) lunchTotal = mins;
             else lastTotal = mins;
-            
-            const limit = breakLimits[type];
-            if (mins > limit) exceeded += (mins - limit);
+            if (mins > breakLimits[type]) exceeded += (mins - breakLimits[type]);
           }
         });
-        
+
         if (firstTotal > 0 || lunchTotal > 0 || lastTotal > 0) {
-          reportData.push({ date: dateStr, team: getEmployeeTeam(name), name, firstTotal, lunchTotal, lastTotal, total: firstTotal + lunchTotal + lastTotal, exceeded });
+          const displayDate = formatDateLocal(parsed);
+          reportData.push({ date: displayDate, team: getEmployeeTeam(name), name, firstTotal, lunchTotal, lastTotal, total: firstTotal + lunchTotal + lastTotal, exceeded });
         }
       });
     });
-    
+
     reportData.sort((a, b) => {
       if (a.date !== b.date) return b.date.localeCompare(a.date);
       if (a.team !== b.team) return a.team.localeCompare(b.team);
       return a.name.localeCompare(b.name);
     });
-    
+
+    if (reportData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No break data found for selected date range</td></tr>';
+      return;
+    }
+
     tbody.innerHTML = reportData.map(r => `
       <tr>
         <td>${r.date}</td>
@@ -720,6 +738,79 @@ function loadReport() {
         <td style="color:${r.exceeded > 0 ? '#dc2626' : '#059669'};font-weight:${r.exceeded > 0 ? '600' : '400'};">${r.exceeded > 0 ? r.exceeded + 'm' : '-'}</td>
       </tr>
     `).join('');
+  }, err => {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#dc2626;">Error: ' + (err.message || err) + '</td></tr>';
+  });
+}
+
+function loadAllReport() {
+  const tbody = document.getElementById('reportBody');
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Loading all data...</td></tr>';
+
+  database.ref('breakData').once('value', snap => {
+    const allData = snap.val();
+    reportData = [];
+
+    if (!allData) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No data</td></tr>';
+      return;
+    }
+
+    Object.keys(allData).forEach(dateKey => {
+      const dateData = allData[dateKey];
+      if (!dateData) return;
+
+      Object.keys(dateData).forEach(name => {
+        const dayData = dateData[name];
+        if (!dayData) return;
+        if (!employees[name]) return;
+
+        let firstTotal = 0, lunchTotal = 0, lastTotal = 0, exceeded = 0;
+
+        ['firstBreak', 'lunch', 'lastBreak'].forEach((type, idx) => {
+          const rec = dayData[type];
+          if (rec && rec.start && rec.end) {
+            const mins = Math.round((new Date(rec.end) - new Date(rec.start)) / 60000);
+            if (idx === 0) firstTotal = mins;
+            else if (idx === 1) lunchTotal = mins;
+            else lastTotal = mins;
+            if (mins > breakLimits[type]) exceeded += (mins - breakLimits[type]);
+          }
+        });
+
+        if (firstTotal > 0 || lunchTotal > 0 || lastTotal > 0) {
+          const parsed = parseAnyDate(dateKey);
+          const displayDate = parsed ? formatDateLocal(parsed) : dateKey;
+          reportData.push({ date: displayDate, team: getEmployeeTeam(name), name, firstTotal, lunchTotal, lastTotal, total: firstTotal + lunchTotal + lastTotal, exceeded });
+        }
+      });
+    });
+
+    reportData.sort((a, b) => {
+      if (a.date !== b.date) return b.date.localeCompare(a.date);
+      if (a.team !== b.team) return a.team.localeCompare(b.team);
+      return a.name.localeCompare(b.name);
+    });
+
+    if (reportData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No completed breaks found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = reportData.map(r => `
+      <tr>
+        <td>${r.date}</td>
+        <td>${r.team}</td>
+        <td>${r.name}</td>
+        <td>${r.firstTotal > 0 ? r.firstTotal + 'm' : '-'}</td>
+        <td>${r.lunchTotal > 0 ? r.lunchTotal + 'm' : '-'}</td>
+        <td>${r.lastTotal > 0 ? r.lastTotal + 'm' : '-'}</td>
+        <td>${r.total}m</td>
+        <td style="color:${r.exceeded > 0 ? '#dc2626' : '#059669'};font-weight:${r.exceeded > 0 ? '600' : '400'};">${r.exceeded > 0 ? r.exceeded + 'm' : '-'}</td>
+      </tr>
+    `).join('');
+  }, err => {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#dc2626;">Error: ' + (err.message || err) + '</td></tr>';
   });
 }
 
@@ -739,20 +830,23 @@ function exportReport() {
 function deleteReportData() {
   const from = document.getElementById('reportFrom').value;
   const to = document.getElementById('reportTo').value;
-  if (!confirm(`Delete all break data from ${from} to ${to}? This cannot be undone.`)) return;
-  
-  const dates = [];
-  for (let d = new Date(from); d <= new Date(to); d.setDate(d.getDate() + 1)) {
-    dates.push(d.toISOString().split('T')[0]);
-  }
-  
-  dates.forEach(dateStr => {
-    database.ref('breakData/' + dateStr).remove();
-    database.ref('logs/' + dateStr).remove();
+  if (!confirm('Delete all break data from ' + from + ' to ' + to + '? This cannot be undone.')) return;
+
+  const fromDate = new Date(from + 'T00:00:00');
+  const toDate = new Date(to + 'T23:59:59');
+
+  database.ref('breakData').once('value', snap => {
+    const allData = snap.val() || {};
+    Object.keys(allData).forEach(dateKey => {
+      const parsed = parseAnyDate(dateKey);
+      if (parsed && parsed >= fromDate && parsed <= toDate) {
+        database.ref('breakData/' + dateKey).remove();
+        database.ref('logs/' + dateKey).remove();
+      }
+    });
+    alert('Data deleted successfully!');
+    loadReport();
   });
-  
-  alert('Data deleted successfully!');
-  loadReport();
 }
 
 function renderEmployeeList() {
@@ -816,16 +910,21 @@ function deleteTeam(team) {
 
 function addEmployee() {
   const name = document.getElementById('newEmpName').value.trim();
+  const username = document.getElementById('newEmpUsername').value.trim();
   const pin = document.getElementById('newEmpPin').value.trim();
   const team = document.getElementById('newEmpTeam').value || 'Unassigned';
   if (!name || !pin) { alert('Please enter name and PIN'); return; }
   if (getEmployees()[name]) { alert('Employee already exists'); return; }
+  if (username && employeeUsernames[username]) { alert('Username already taken'); return; }
   
   employees[name] = pin;
   employeeTeams[name] = team;
+  if (username) employeeUsernames[username] = name;
   database.ref('employeeTeams').set(employeeTeams);
+  database.ref('employeeUsernames').set(employeeUsernames);
   saveToFirebase();
   document.getElementById('newEmpName').value = '';
+  document.getElementById('newEmpUsername').value = '';
   document.getElementById('newEmpPin').value = '';
   document.getElementById('newEmpTeam').value = '';
   renderEmployeeList();
@@ -833,9 +932,17 @@ function addEmployee() {
 }
 
 function removeEmployee(name) {
-  if (!confirm(`Remove ${name}?`)) return;
+  if (!confirm('Remove ' + name + '?')) return;
   delete employees[name];
-  saveToFirebase();
+  delete employeeTeams[name];
+  Object.keys(employeeUsernames).forEach(username => {
+    if (employeeUsernames[username] === name) {
+      delete employeeUsernames[username];
+    }
+  });
+  database.ref('employees').set(employees);
+  database.ref('employeeTeams').set(employeeTeams);
+  database.ref('employeeUsernames').set(employeeUsernames);
   renderEmployeeList();
 }
 
@@ -883,13 +990,19 @@ document.querySelectorAll('input[name="role"]').forEach(r => {
 document.getElementById('loginBtn').onclick = () => {
   const role = document.querySelector('input[name="role"]:checked').value;
   if (role === 'employee') {
-    const name = document.getElementById('empName').value.trim();
+    const input = document.getElementById('empName').value.trim();
     const pin = document.getElementById('empPin').value;
     const empList = getEmployees();
     let found = null;
-    for (let n of Object.keys(empList)) {
-      if (n.toLowerCase() === name.toLowerCase()) { found = n; break; }
+    
+    if (employeeUsernames[input]) {
+      found = employeeUsernames[input];
+    } else {
+      for (let n of Object.keys(empList)) {
+        if (n.toLowerCase() === input.toLowerCase()) { found = n; break; }
+      }
     }
+    
     if (!found || empList[found] !== pin) { alert('Invalid credentials'); return; }
     setSession('employee', found);
   } else {
@@ -978,7 +1091,7 @@ document.getElementById('datePicker').onchange = e => {
 };
 
 document.getElementById('todayBtn').onclick = () => { 
-  selectedDate = new Date().toISOString().split('T')[0]; 
+  selectedDate = formatDateLocal(new Date()); 
   document.getElementById('datePicker').value = selectedDate;
   database.ref('breakData/' + selectedDate).once('value').then(snap => {
     breakData = snap.val() || {};
